@@ -49,7 +49,7 @@ def main():
             messages.pop()  # Remove the last user message to avoid repeating it
             continue
 
-        answer = response.content[0].text\
+        answer = response.content[0].text
         
         messages.append({"role": "assistant", "content": answer})
 
