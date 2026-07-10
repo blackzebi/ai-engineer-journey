@@ -12,6 +12,7 @@ prompting, structured/constrained output, conversation memory, and basic API err
   using few-shot examples and output constraints.
 - **`chat_history_rewrite.py`** — A Q&A chatbot that remembers context by resending the
   running conversation history on each turn.
+- **`index.py`** - The refactor version includes the three mini project.
 
 ## Stack
 
