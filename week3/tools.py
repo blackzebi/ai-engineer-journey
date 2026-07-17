@@ -64,6 +64,13 @@ FILE_TOOL = {
     },
 }
 
+SYSTEM_PROMPT = """\
+# Vai trò: trợ lý tính toán, tiết kiệm tool call.
+# ĐƯỢC dùng tool: phép tính lớn/nhiều bước; đọc file khi user chỉ rõ path; hỏi giờ.
+# KHÔNG dùng tool: phép tính đơn giản (2+2) tự trả lời; câu hỏi khái niệm.
+# Cách trả lời: ngắn gọn tiếng Việt; nếu dùng tool nêu 1 câu lý do.
+"""
+
 def calculator(operation: str, a: float, b: float) -> str:
    if operation == "add": return str(a + b)
    if operation == "subtract": return str(a - b)
@@ -87,16 +94,16 @@ def execute_tool(name: str, tool_input: dict) -> str:
         return calculator(**tool_input)
     raise ValueError(f"No exist {name} tool!")
 
-def run_agent_tool(messages: list) -> str:
+def run_agent_tool(messages: list, max_turn: int = 10, tool_choice = None, system: str = SYSTEM_PROMPT) -> str:
 
-    while True:
+    for i in range(max_turn):
+        kwargs = dict(model=MODEL, max_tokens=MAX_TOKENS, tools=[CALCULATOR_TOOL, TIME_TOOL, FILE_TOOL], messages=messages)
+        if system:
+            kwargs["system"] = system
+        if tool_choice and i == 0:
+            kwargs["tool_choice"] = tool_choice
         try:
-            response = client.messages.create(
-                model=MODEL,
-                max_tokens=MAX_TOKENS,
-                tools=[CALCULATOR_TOOL, TIME_TOOL, FILE_TOOL],
-                messages=messages
-            )
+            response = client.messages.create(**kwargs)
         except anthropic.AuthenticationError:
             raise SystemExit("Lỗi xác thực — kiểm tra ANTHROPIC_API_KEY trong .env")
         except anthropic.APITimeoutError:
@@ -133,6 +140,22 @@ def run_agent_tool(messages: list) -> str:
 
         messages.append({"role": "user", "content": tool_results})
 
+    return "[Đã đạt số lượng goi tool!]"
+
+
+def demo_tool_choice(prompt: str):
+    choices = {
+        "auto": {"type": "auto"},
+        "any": {"type": "any"},
+        "tool (ep calculator)": {"type": "tool", "name": "calculator"},
+    }
+    print(f"\n=== So sanh tool_choice tren prompt: {prompt!r} ===")
+    for label, choice in choices.items():
+        messages = [{"role": "user", "content": prompt}]
+        answer = run_agent_tool(messages, tool_choice=choice, system=None)
+        print(f"\n--- tool_choice = {label} ---")
+        print("tra loi:", answer)
+
 
 def main():
     messages = []
@@ -143,6 +166,9 @@ def main():
         if user_input.lower() in ("thoat", "exit", "quit"):
             print("Tạm biệt!")
             break
+        if user_input.lower() == "demo":
+            demo_tool_choice("Tinh 1200 + 1500 + 1800 bang bao nhieu?")
+            continue
         if not user_input:
             print("Làm ơn nhập câu hỏi!")
             continue
