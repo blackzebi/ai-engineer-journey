@@ -1,7 +1,10 @@
 import os
 import sys
+import json
+import logging
 import datetime
 from dotenv import load_dotenv
+from utils import parse_json_safely
 
 load_dotenv()
 
@@ -15,6 +18,8 @@ if secret_key is None:
 import anthropic
 
 client = anthropic.Anthropic(timeout=30)
+
+NOTES_FILE = "notes.json"
 
 MODEL = "claude-haiku-4-5-20251001"
 MAX_TOKENS = 512
@@ -64,6 +69,36 @@ FILE_TOOL = {
     },
 }
 
+ADD_NOTES_TOOL = {
+    "name": "add_notes",
+    "description": "Add new notes to notes.json file to remember and handle the same case in the future",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "text": {"type": "string", "description": "text to add notes"}
+        },
+        "required": ["text"]
+    },
+}
+
+LIST_NOTES_TOOL = {
+    "name": "list_notes",
+    "description": "list to stored all notes have add before",
+    "input_schema": {"type": "object", "properties": {}}
+}
+
+SEARCH_NOTES_TOOL = {
+    "name": "search_notes",
+    "description": "Will base on keywork provide to search in list notes to show if it exist or not",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "keyword": {"type": "string", "description": "keyword to search into list notes"}
+        },
+        "required": ["keyword"],
+    },
+}
+
 SYSTEM_PROMPT = """\
 # Vai trò: trợ lý tính toán, tiết kiệm tool call.
 # ĐƯỢC dùng tool: phép tính lớn/nhiều bước; đọc file khi user chỉ rõ path; hỏi giờ.
@@ -92,12 +127,90 @@ def execute_tool(name: str, tool_input: dict) -> str:
         return get_current_time()
     if name == "calculator":
         return calculator(**tool_input)
+    if name == "add_notes":
+        return add_notes(tool_input["text"])
+    if name == "list_notes":
+        return list_notes()
+    if name == "search_notes":
+        return search_notes(tool_input["keyword"])
     raise ValueError(f"No exist {name} tool!")
+
+def _load_notes() -> list:
+    """Đọc notes.json -> list dict. File chưa có / hỏng -> trả list rỗng."""
+    if not os.path.exists(NOTES_FILE):
+        return []
+    try:
+        with open(NOTES_FILE, encoding="utf-8") as f:
+            return parse_json_safely(f.read(), [])
+    except OSError as e:
+        logging.warning("Không đọc được %s: %s", NOTES_FILE, e)
+        return []
+
+def _save_notes(notes: list) -> None:
+    """Ghi list note xuống notes.json (giữ tiếng Việt, format đẹp)."""
+    with open(NOTES_FILE, "w", encoding="utf-8") as f:
+        json.dump(notes, f, ensure_ascii=False, indent=2)
+
+def add_notes(text: str) -> str:
+    notes = _load_notes()
+    new_id = max((n["id"] for n in notes), default=0) + 1
+    notes.append({"id": new_id, "text": text, "created": get_current_time()})
+    _save_notes(notes)
+    return f"Đã thêm note #{new_id}: {text!r}"
+
+def list_notes() -> str:
+    notes = _load_notes()
+    if not notes:
+        return "Chưa có note nào."
+    return "\n".join(f"#{n['id']} ({n['created']}): {n['text']}" for n in notes)
+
+def search_notes(keyword: str) -> str:
+    notes = _load_notes()
+    kw = keyword.lower()
+    found = [n for n in notes if kw in n["text"].lower()]
+    if not found:
+        return f"Không tìm thấy note nào chứa {keyword!r}."
+    return "\n".join(f"#{n['id']}: {n['text']}" for n in found)
+
+
+def demo_tool_choice(prompt: str):
+    choices = {
+        "auto": {"type": "auto"},
+        "any": {"type": "any"},
+        "tool (ep calculator)": {"type": "tool", "name": "calculator"},
+    }
+    print(f"\n=== So sanh tool_choice tren prompt: {prompt!r} ===")
+    for label, choice in choices.items():
+        messages = [{"role": "user", "content": prompt}]
+        answer = run_agent_tool(messages, tool_choice=choice, system=None)
+        print(f"\n--- tool_choice = {label} ---")
+        print("tra loi:", answer)
+
+def extract_info(text: str) -> str:
+    prompt = (
+        "Trích xuất tên, ngày, số tiền từ đoạn sau. "
+        'Chỉ trả JSON dạng {"ten":..., "ngay":..., "so_tien":...}, '
+        "thiếu field nào thì để null. Đoạn: " + text
+    )
+
+    resp = client.messages.create(
+        model=MODEL,
+        max_tokens=MAX_TOKENS,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    raw = next(b.text for b in resp.content if b.type == "text")
+
+    return parse_json_safely(raw)
+
 
 def run_agent_tool(messages: list, max_turn: int = 10, tool_choice = None, system: str = SYSTEM_PROMPT) -> str:
 
     for i in range(max_turn):
-        kwargs = dict(model=MODEL, max_tokens=MAX_TOKENS, tools=[CALCULATOR_TOOL, TIME_TOOL, FILE_TOOL], messages=messages)
+        kwargs = dict(model=MODEL, max_tokens=MAX_TOKENS,
+                      tools=[CALCULATOR_TOOL, TIME_TOOL, FILE_TOOL,
+                             ADD_NOTES_TOOL, LIST_NOTES_TOOL, SEARCH_NOTES_TOOL],
+                      messages=messages)
         if system:
             kwargs["system"] = system
         if tool_choice and i == 0:
@@ -142,21 +255,6 @@ def run_agent_tool(messages: list, max_turn: int = 10, tool_choice = None, syste
 
     return "[Đã đạt số lượng goi tool!]"
 
-
-def demo_tool_choice(prompt: str):
-    choices = {
-        "auto": {"type": "auto"},
-        "any": {"type": "any"},
-        "tool (ep calculator)": {"type": "tool", "name": "calculator"},
-    }
-    print(f"\n=== So sanh tool_choice tren prompt: {prompt!r} ===")
-    for label, choice in choices.items():
-        messages = [{"role": "user", "content": prompt}]
-        answer = run_agent_tool(messages, tool_choice=choice, system=None)
-        print(f"\n--- tool_choice = {label} ---")
-        print("tra loi:", answer)
-
-
 def main():
     messages = []
 
@@ -168,6 +266,11 @@ def main():
             break
         if user_input.lower() == "demo":
             demo_tool_choice("Tinh 1200 + 1500 + 1800 bang bao nhieu?")
+            continue
+        if user_input.lower() == "extract":
+            text = "Tôi tên là Trí, hôm nay là ngày 18/07/2026 tôi đã kiếm được 20 triệu tiền vnd từ công việc hiện tại của tôi"
+            result = extract_info(text)
+            print("JSON trích xuất:", json.dumps(result, ensure_ascii=False, indent=2))
             continue
         if not user_input:
             print("Làm ơn nhập câu hỏi!")
