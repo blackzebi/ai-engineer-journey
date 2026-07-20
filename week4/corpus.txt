@@ -1,0 +1,24 @@
+# Kho đoạn text để embed — mỗi dòng là 1 đoạn (1–3 câu). Dòng bắt đầu bằng # hoặc dòng trống bị bỏ qua.
+# TODO: soát lại, thêm/bớt cho đủ ~20 đoạn từ notes tuần 1–3 THẬT của bạn. Càng đa dạng chủ đề càng dễ demo Task 3.
+
+httpx là thư viện HTTP client hỗ trợ cả sync và async trong Python.
+async/await cho phép chạy nhiều tác vụ I/O đồng thời mà không chặn luồng.
+Trong Python bạn có thể dùng asyncio để chạy một hàm async.
+REST API dùng các method GET/POST/PUT/DELETE trên tài nguyên qua URL.
+Structured output ép model trả JSON đúng schema để máy đọc được.
+Function calling cho phép model tự quyết định gọi tool mà bạn định nghĩa sẵn.
+Embedding biến một đoạn văn bản thành vector số; nội dung càng gần nghĩa thì vector càng gần nhau.
+Cosine similarity đo độ giống nhau về hướng của hai vector, giá trị trong khoảng -1 đến 1.
+Trong messages có 2 role chính là user và assistant, dùng khi muốn lưu lịch sử trò chuyện.
+Để giữ ngữ cảnh với Anthropic bạn phải gửi lại toàn bộ lịch sử; model không tự nhớ các call trước.
+System prompt định hướng cách model trả lời theo vai trò bạn đặt ra.
+max_tokens trong Anthropic là bắt buộc, còn ở OpenAI là optional.
+Trong Anthropic có thể định nghĩa tool riêng để AI giải quyết việc bên ngoài như tính toán, hỏi ngày giờ.
+PostgreSQL là hệ quản trị cơ sở dữ liệu quan hệ, xử lý được dữ liệu phức tạp.
+Re-render là side effect trên frontend khi state thay đổi.
+var có scope theo function, còn let và const có scope theo block.
+Microtask (ví dụ promise.then) có độ ưu tiên cao hơn macrotask.
+Macrotask (ví dụ setTimeout) chỉ chạy khi call stack và hàng đợi microtask đã rỗng.
+DOM và Virtual DOM khác nhau; React dùng Virtual DOM và mỗi bên có ưu nhược điểm riêng.
+Học AI hiện có hai hướng chính là LLM và Machine Learning truyền thống.
+Con mèo không phải con chó nhưng cả hai đều là động vật sống trên Trái Đất.
