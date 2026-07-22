@@ -1,0 +1,30 @@
+# docker-compose cho Postgres + pgvector (T3 tuần 4)
+# Tiện hơn `docker run` dài dòng: bật/tắt bằng 1 lệnh, có volume nên dữ liệu KHÔNG mất.
+#
+#   docker compose up -d      # chạy nền
+#   docker compose logs -f     # xem log
+#   docker compose down        # tắt (giữ dữ liệu trong volume)
+#   docker compose down -v     # tắt + XOÁ dữ liệu (xoá volume)
+#
+# Connection string tương ứng (chép vào .env ở gốc repo):
+#   DATABASE_URL=postgresql://postgres:ragpass@localhost:5432/study_rag
+
+services:
+  rag-pg:
+    image: pgvector/pgvector:pg17
+    container_name: rag-pg
+    environment:
+      POSTGRES_PASSWORD: ragpass      # đổi nếu muốn — nhớ đồng bộ DATABASE_URL
+      POSTGRES_DB: study_rag          # Postgres tự tạo DB này khi khởi tạo lần đầu
+    ports:
+      - "5432:5432"                   # máy:container — thiếu dòng này Python không kết nối được
+    volumes:
+      - rag_pgdata:/var/lib/postgresql/data   # dữ liệu bền qua các lần down/up
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d study_rag"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  rag_pgdata:
