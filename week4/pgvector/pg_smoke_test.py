@@ -6,7 +6,6 @@ Mục tiêu: kết nối từ Python tới container Postgres, xác nhận:
   2. Bật extension `vector`                                     (Task 3)
   3. Hiểu kiểu cột vector(n): tạo bảng vector(384), insert, select  (Task 3)
 
-Đây là code KHUNG — bạn điền 4 chỗ `# TODO`. Đáp án/gợi ý ở guide.md.
 Concept nền (vì sao vector, vì sao 384): study notes T3.
 
 Chạy (sau khi đã `docker run` container + pip install psycopg[binary]):
@@ -38,12 +37,7 @@ EMBED_DIM = 384
 # Task 2 — kết nối + SELECT 1
 # ---------------------------------------------------------------------------
 def get_conn() -> "psycopg.Connection":
-    """Mở kết nối tới Postgres bằng DATABASE_URL.
-
-    # TODO 1: return psycopg.connect(DATABASE_URL)
-    #   - Nếu lỗi 'connection refused' -> container chưa chạy / sai port.
-    #   - Nếu lỗi auth -> sai user/pass trong connection string.
-    """
+    """Mở kết nối tới Postgres bằng DATABASE_URL."""
     try:
         return psycopg.connect(DATABASE_URL)
     except psycopg.OperationalError as e:
@@ -57,15 +51,7 @@ def get_conn() -> "psycopg.Connection":
 
 
 def check_select_1(conn: "psycopg.Connection") -> None:
-    """Chạy `SELECT 1` — bằng chứng nhỏ nhất là 'Python nói chuyện được với DB'.
-
-    # TODO 2:
-    #   with conn.cursor() as cur:
-    #       cur.execute("SELECT 1;")
-    #       row = cur.fetchone()        # -> (1,)
-    #       assert row[0] == 1
-    #   print("✅ SELECT 1 OK ->", row)
-    """
+    """Chạy `SELECT 1` — bằng chứng nhỏ nhất là 'Python nói chuyện được với DB'."""
     with conn.cursor() as cur:
         cur.execute("SELECT 1;")
         row = cur.fetchone()
@@ -77,17 +63,7 @@ def check_select_1(conn: "psycopg.Connection") -> None:
 # Task 3a — bật extension vector
 # ---------------------------------------------------------------------------
 def enable_pgvector(conn: "psycopg.Connection") -> None:
-    """Bật extension `vector` trong database hiện tại (chỉ cần 1 lần / database).
-
-    # TODO 3:
-    #   with conn.cursor() as cur:
-    #       cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
-    #       cur.execute("SELECT extv
-    # ersion FROM pg_extension WHERE extname = 'vector';")
-    #       ver = cur.fetchone()
-    #   conn.commit()                    # DDL cũng cần commit (autocommit off mặc định)
-    #   print("✅ pgvector bật, version =", ver[0])
-    """
+    """Bật extension `vector` trong database hiện tại (chỉ cần 1 lần / database)."""
     with conn.cursor() as cur:
         cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
         cur.execute("SELECT extversion FROM pg_extension WHERE extname = 'vector';")
@@ -102,30 +78,6 @@ def enable_pgvector(conn: "psycopg.Connection") -> None:
 def demo_vector_column(conn: "psycopg.Connection") -> None:
     """Tạo bảng có cột vector(EMBED_DIM), insert 1 vector, select lại.
     Mục tiêu: 'thấy tận mắt' vector(n) — n phải khớp số chiều model.
-
-    # TODO 4:
-    #   with conn.cursor() as cur:
-    #       cur.execute("DROP TABLE IF EXISTS smoke_items;")
-    #       cur.execute(
-    #           f"CREATE TABLE smoke_items ("
-    #           f"  id bigserial PRIMARY KEY,"
-    #           f"  content text,"
-    #           f"  embedding vector({EMBED_DIM})"   # <-- kiểu cột vector(n)
-    #           f");"
-    #       )
-    #       demo_vec = [0.0] * EMBED_DIM              # vector 384 chiều toàn 0 (chỉ để test)
-    #       demo_vec[0] = 1.0
-    #       cur.execute(
-    #           "INSERT INTO smoke_items (content, embedding) VALUES (%s, %s);",
-    #           ("hello pgvector", str(demo_vec)),   # pgvector nhận literal dạng '[0,0,...]'
-    #       )
-    #       cur.execute("SELECT id, content, vector_dims(embedding) FROM smoke_items;")
-    #       rows = cur.fetchall()
-    #   conn.commit()
-    #   print("✅ Bảng vector demo:", rows)   # dims phải = 384
-    #
-    #   THỬ NGHIỆM (để hiểu vì sao n phải khớp): sau khi chạy OK, thử insert vector
-    #   có ĐỘ DÀI KHÁC 384 -> Postgres báo lỗi 'expected N dimensions'. Ghi lỗi đó vào notes.
     """
     with conn.cursor() as cur:
         cur.execute("DROP TABLE IF EXISTS smoke_items;")

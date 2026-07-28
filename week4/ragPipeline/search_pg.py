@@ -9,8 +9,6 @@ Mảnh cuối của pipeline. Và là dịp **đối chiếu 2 cách làm cùng 
 Cùng 1 câu hỏi — kết quả có giống nhau không? Vì sao? Đó là câu hỏi chính của buổi hôm nay,
 không phải "chạy được hay chưa".
 
-Code KHUNG — điền các chỗ `# TODO`. Gợi ý ở guide.md.
-
 Chạy:
     python search_pg.py "làm sao gọi mạng bất đồng bộ trong Python?"
     python search_pg.py "..." --compare        # chạy kèm bản thuần Python để so
@@ -47,23 +45,14 @@ def get_model() -> SentenceTransformer:
 def embed_query(question: str) -> list[float]:
     """Embed câu hỏi thành 1 vector.
 
-    # TODO 1:
-    #   return get_model().encode(question).tolist()
-    #
-    # Lưu ý: sentence-transformers KHÔNG có input_type (khác Voyage/OpenAI) — dùng chung
-    # 1 model cho cả document lẫn query. Với Voyage thì phải phân biệt, đừng quen tay.
+    Lưu ý: sentence-transformers KHÔNG có input_type (khác Voyage/OpenAI) — dùng chung
+    1 model cho cả document lẫn query. Với Voyage thì phải phân biệt, đừng quen tay.
     """
     return get_model().encode(question).tolist()
 
 
 def search(question: str, k: int = TOP_K) -> list[tuple[int, str, str, float]]:
-    """Câu hỏi -> top-k chunk từ pgvector. Trả [(id, source, content, similarity), ...].
-
-    # TODO 2:
-    #   vec = embed_query(question)
-    #   with get_conn() as conn:
-    #       return search_top_k(conn, vec, k=k)
-    """
+    """Câu hỏi -> top-k chunk từ pgvector. Trả [(id, source, content, similarity), ...]."""
     vec = embed_query(question)
     with get_conn() as conn:
         return search_top_k(conn, vec, k=k)
@@ -82,18 +71,11 @@ def print_results(title: str, rows: list[tuple], elapsed: float) -> None:
 def compare_with_python(question: str, k: int = TOP_K) -> None:
     """Chạy lại cùng câu hỏi bằng semantic search thuần Python (tuần 3) để đối chiếu.
 
-    # TODO 3 (làm sau khi TODO 1-2 chạy được):
-    #   sys.path.append(os.path.join(os.path.dirname(__file__), "..", "semanticSearch"))
-    #   from semantic_search import search as py_search
-    #   t0 = time.perf_counter()
-    #   rows = [(0, "corpus.txt", text, score) for text, score in py_search(question, top_k=k)]
-    #   print_results("Thuần Python (vectors.json + cosine tự viết)", rows, time.perf_counter() - t0)
-    #
-    # ⚠️ Hai bên đang chạy trên 2 KHO KHÁC NHAU (corpus.txt ~20 dòng vs toàn bộ notes .md),
-    #    nên đừng kỳ vọng top-5 trùng khít. Thứ đáng so là:
-    #      - Thứ hạng tương đối có hợp lý như nhau không?
-    #      - Điểm similarity 2 bên có cùng thang không? (cả hai đều là cosine -> phải cùng thang)
-    #      - Tốc độ: bên nào nhanh hơn ở quy mô này? Còn ở quy mô 100k chunk thì sao?
+    ⚠️ Hai bên đang chạy trên 2 KHO KHÁC NHAU (corpus.txt ~20 dòng vs toàn bộ notes .md),
+       nên đừng kỳ vọng top-5 trùng khít. Thứ đáng so là:
+         - Thứ hạng tương đối có hợp lý như nhau không?
+         - Điểm similarity 2 bên có cùng thang không? (cả hai đều là cosine -> phải cùng thang)
+         - Tốc độ: bên nào nhanh hơn ở quy mô này? Còn ở quy mô 100k chunk thì sao?
     """
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "semanticSearch"))
     from semantic_search import search as py_search

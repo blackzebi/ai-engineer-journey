@@ -1,0 +1,27 @@
+[
+  {
+    "q": "asyncio trong Python dùng để làm gì?",
+    "expect": "answerable",
+    "note": "Có trong notes Tuần 1 / Async"
+  },
+  {
+    "q": "Embedding là gì và dùng để làm gì trong semantic search?",
+    "expect": "answerable",
+    "note": "Có trong notes Tuần 3 / T5 / Embedding"
+  },
+  {
+    "q": "Vì sao phải chunk (chia nhỏ) tài liệu trước khi embed?",
+    "expect": "answerable",
+    "note": "Có trong notes Tuần 4 / T3 / Chunking"
+  },
+  {
+    "q": "Giá cổ phiếu Apple hôm nay là bao nhiêu?",
+    "expect": "no_answer",
+    "note": "KHÔNG có trong notes — model phải nói không tìm thấy"
+  },
+  {
+    "q": "Cách nấu phở bò truyền thống gồm những bước nào?",
+    "expect": "no_answer",
+    "note": "KHÔNG có trong notes — bẫy kiểm tra chống bịa"
+  }
+]

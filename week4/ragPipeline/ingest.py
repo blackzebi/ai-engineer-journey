@@ -7,8 +7,6 @@ ingest.py — Pipeline ingest: folder .md -> chunk -> embed -> INSERT pgvector (
 Đây là chỗ **ghép 3 mảnh đã học rời rạc** thành 1 pipeline chạy được:
     chunker.py (hôm nay)  +  embed model (tuần 3)  +  bảng chunks (block sáng nay)
 
-Code KHUNG — điền các chỗ `# TODO`. Gợi ý ở guide.md.
-
 Chạy:
     python ingest.py                        # dùng NOTES_DIR mặc định
     python ingest.py "D:/Study/AI-Engineer-Study/python-knowledge"
@@ -47,12 +45,8 @@ BATCH_SIZE = 64  # embed theo lô cho nhanh, đừng encode từng chunk một
 def embed_texts(texts: list[str], model: SentenceTransformer) -> list[list[float]]:
     """Embed 1 lô text -> list vector.
 
-    # TODO 1:
-    #   vectors = model.encode(texts, batch_size=BATCH_SIZE, show_progress_bar=True)
-    #   return vectors.tolist()
-    #
-    # Kiểm tra 1 lần cho chắc: len(vectors[0]) phải == EMBED_DIM (384).
-    # Lệch là do đổi model -> phải sửa cả EMBED_DIM lẫn tạo lại bảng.
+    Kiểm tra 1 lần cho chắc: len(vectors[0]) phải == EMBED_DIM (384).
+    Lệch là do đổi model -> phải sửa cả EMBED_DIM lẫn tạo lại bảng.
     """
     vectors = model.encode(texts, batch_size=BATCH_SIZE, show_progress_bar=True)
     if len(vectors[0]) == EMBED_DIM:
@@ -70,25 +64,9 @@ def ingest(folder: str, reset: bool = True) -> int:
         3. create_chunks_table(conn, drop=reset)
         4. insert_chunks_batch(conn, [(source, content, vector), ...])
 
-    # TODO 2:
-    #   pairs = chunk_folder(folder)
-    #   if not pairs:
-    #       raise SystemExit(f"Không tìm thấy file .md nào trong {folder}")
-    #   print(f"📄 {len(pairs)} chunk — bắt đầu embed (lần đầu sẽ tải model ~470MB)")
-    #
-    #   model = SentenceTransformer(MODEL_NAME)
-    #   vectors = embed_texts([content for _src, content in pairs], model)
-    #   assert len(vectors[0]) == EMBED_DIM, f"Model trả {len(vectors[0])} chiều, bảng khai {EMBED_DIM}"
-    #
-    #   rows = [(src, content, vec) for (src, content), vec in zip(pairs, vectors)]
-    #   with get_conn() as conn:
-    #       create_chunks_table(conn, drop=reset)      # reset=True: ingest lại từ đầu, tránh trùng
-    #       n = insert_chunks_batch(conn, rows)
-    #   return n
-    #
-    # Vì sao reset=True mặc định: chạy ingest 2 lần mà không xoá -> mỗi chunk có 2 bản,
-    # top-5 trả về toàn cặp trùng nhau. (Cách "xịn" hơn ở tuần sau: UNIQUE(source, content)
-    # hoặc xoá theo source trước khi insert lại — để dành khi làm incremental update.)
+    Vì sao reset=True mặc định: chạy ingest 2 lần mà không xoá -> mỗi chunk có 2 bản,
+    top-5 trả về toàn cặp trùng nhau. (Cách "xịn" hơn ở tuần sau: UNIQUE(source, content)
+    hoặc xoá theo source trước khi insert lại — để dành khi làm incremental update.)
     """
     pairs = chunk_folder(folder)
     if not pairs:

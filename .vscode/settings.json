@@ -1,6 +1,8 @@
 {
     "python.analysis.extraPaths": [
         "./week4/pgvector",
-        "./week4/semanticSearch"
+        "./week4/semanticSearch",
+        "./week4/ragPipeline",
+        "./week3"
     ]
 }

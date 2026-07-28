@@ -6,8 +6,6 @@ Nối tiếp `pg_smoke_test.py` (T3: kết nối + bật extension). Hôm nay l�
   Task 6. INSERT embedding từ Python + phân biệt `<=>` (cosine DISTANCE) vs `<->` (L2)
   Task 7. Query top-k: `ORDER BY embedding <=> %s LIMIT 5` — đối chiếu với cosine tự cài tuần 3
 
-Đây là code KHUNG — bạn điền các chỗ `# TODO`. Gợi ý/đáp án ở guide-t4.md.
-
 Chạy (container rag-pg phải đang Up):
     python vector_ops.py
 """
@@ -71,24 +69,8 @@ def create_chunks_table(conn: "psycopg.Connection", drop: bool = False) -> None:
       content   text           -> chữ gốc của chunk (đưa vào prompt LLM ở tuần 5)
       embedding vector(384)    -> vector nghĩa của content
 
-    # TODO 1:
-    #   with conn.cursor() as cur:
-    #       cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")   # phòng khi DB mới
-    #       if drop:
-    #           cur.execute("DROP TABLE IF EXISTS chunks;")
-    #       cur.execute(
-    #           f"CREATE TABLE IF NOT EXISTS chunks ("
-    #           f"  id bigserial PRIMARY KEY,"
-    #           f"  source text NOT NULL,"
-    #           f"  content text NOT NULL,"
-    #           f"  embedding vector({EMBED_DIM})"
-    #           f");"
-    #       )
-    #   conn.commit()
-    #   print(f"✅ Bảng chunks sẵn sàng (embedding vector({EMBED_DIM}))")
-    #
-    # Câu hỏi tự trả lời (ghi vào notes): vì sao 384? -> vì model
-    # paraphrase-multilingual-MiniLM-L12-v2 xuất ra 384 số. Cột phải khớp, sai là INSERT lỗi.
+    Câu hỏi tự trả lời (ghi vào notes): vì sao 384? -> vì model
+    paraphrase-multilingual-MiniLM-L12-v2 xuất ra 384 số. Cột phải khớp, sai là INSERT lỗi.
     """
     with conn.cursor() as cur:
         cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
@@ -117,20 +99,10 @@ def insert_chunk(
 ) -> int:
     """INSERT 1 chunk, trả về id vừa tạo.
 
-    # TODO 2:
-    #   with conn.cursor() as cur:
-    #       cur.execute(
-    #           "INSERT INTO chunks (source, content, embedding) VALUES (%s, %s, %s) RETURNING id;",
-    #           (source, content, to_pgvector(embedding)),
-    #       )
-    #       new_id = cur.fetchone()[0]
-    #   conn.commit()
-    #   return new_id
-    #
-    # Bẫy:
-    #   - LUÔN dùng placeholder %s (psycopg tự escape). Đừng f-string SQL -> SQL injection.
-    #   - Sai số chiều -> lỗi 'expected 384 dimensions, not N'.
-    #   - Quên commit -> chạy xong, `docker exec psql` SELECT thấy 0 dòng, tưởng code sai.
+    Bẫy:
+      - LUÔN dùng placeholder %s (psycopg tự escape). Đừng f-string SQL -> SQL injection.
+      - Sai số chiều -> lỗi 'expected 384 dimensions, not N'.
+      - Quên commit -> chạy xong, `docker exec psql` SELECT thấy 0 dòng, tưởng code sai.
     """
     with conn.cursor() as cur:
         cur.execute(
@@ -148,17 +120,7 @@ def insert_chunks_batch(
 ) -> int:
     """INSERT nhiều chunk 1 lần (dùng cho ingest.py). rows = [(source, content, embedding), ...].
 
-    # TODO 3:
-    #   params = [(s, c, to_pgvector(v)) for s, c, v in rows]
-    #   with conn.cursor() as cur:
-    #       cur.executemany(
-    #           "INSERT INTO chunks (source, content, embedding) VALUES (%s, %s, %s);",
-    #           params,
-    #       )
-    #   conn.commit()
-    #   return len(params)
-    #
-    # Vì sao batch: mỗi execute là 1 round-trip tới DB. 500 chunk insert lẻ = 500 round-trip.
+    Vì sao batch: mỗi execute là 1 round-trip tới DB. 500 chunk insert lẻ = 500 round-trip.
     """
     params = [(s, c, to_pgvector(v)) for s, c, v in rows]
     with conn.cursor() as cur:
@@ -185,23 +147,9 @@ def compare_operators(conn: "psycopg.Connection", query_vec: list[float]) -> Non
     | `<->`   | L2 / Euclidean   | khoảng cách thẳng giữa 2 điểm    |
     | `<#>`   | negative inner product | -(a·b) — pgvector để dấu âm cho "nhỏ = gần" |
 
-    # TODO 4:
-    #   q = to_pgvector(query_vec)
-    #   with conn.cursor() as cur:
-    #       cur.execute(
-    #           "SELECT id, left(content, 50),"
-    #           "       embedding <=> %s AS cosine_distance,"
-    #           "       1 - (embedding <=> %s) AS cosine_similarity,"
-    #           "       embedding <-> %s AS l2_distance "
-    #           "FROM chunks ORDER BY cosine_distance LIMIT 5;",
-    #           (q, q, q),
-    #       )
-    #       for row in cur.fetchall():
-    #           print(row)
-    #
-    # Quan sát rồi ghi notes: thứ hạng theo <=> và theo <-> có giống nhau không?
-    # (Với vector đã chuẩn hoá norm=1 thì 2 thứ hạng TRÙNG nhau — sentence-transformers
-    #  mặc định KHÔNG normalize, nên có thể lệch. Đây là 1 câu phỏng vấn hay.)
+    Quan sát rồi ghi notes: thứ hạng theo <=> và theo <-> có giống nhau không?
+    (Với vector đã chuẩn hoá norm=1 thì 2 thứ hạng TRÙNG nhau — sentence-transformers
+     mặc định KHÔNG normalize, nên có thể lệch. Đây là 1 câu phỏng vấn hay.)
     """
     q = to_pgvector(query_vec)
     with conn.cursor() as cur:
@@ -233,21 +181,11 @@ def search_top_k(
         ORDER BY embedding <=> %s      -- sắp theo DISTANCE tăng dần = gần nhất trước
         LIMIT %s;
 
-    # TODO 5:
-    #   q = to_pgvector(query_vec)
-    #   with conn.cursor() as cur:
-    #       cur.execute(
-    #           "SELECT id, source, content, 1 - (embedding <=> %s) AS similarity "
-    #           "FROM chunks ORDER BY embedding <=> %s LIMIT %s;",
-    #           (q, q, k),
-    #       )
-    #       return cur.fetchall()
-    #
-    # Bẫy:
-    #   - ORDER BY similarity DESC cũng ra kết quả đúng, NHƯNG sắp theo biểu thức 1-... thì
-    #     index vector (HNSW/IVFFlat) KHÔNG dùng được. Luôn ORDER BY <toán tử khoảng cách>.
-    #   - Chưa có index thì Postgres quét tuần tự — vài nghìn dòng vẫn nhanh, đủ cho tuần này.
-    #     Index là chuyện tuần 6 (tối ưu retrieval).
+    Bẫy:
+      - ORDER BY similarity DESC cũng ra kết quả đúng, NHƯNG sắp theo biểu thức 1-... thì
+        index vector (HNSW/IVFFlat) KHÔNG dùng được. Luôn ORDER BY <toán tử khoảng cách>.
+      - Chưa có index thì Postgres quét tuần tự — vài nghìn dòng vẫn nhanh, đủ cho tuần này.
+        Index là chuyện tuần 6 (tối ưu retrieval).
     """
     q = to_pgvector(query_vec)
     with conn.cursor() as cur:
