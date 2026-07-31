@@ -34,7 +34,7 @@ sys.path.append(os.path.join(HERE, "..", "..", "week4", "ragPipeline"))
 
 from sentence_transformers import SentenceTransformer  # noqa: E402
 
-from chunker import chunk_text  # noqa: E402
+from chunker import chunk_text, CHUNK_SIZE, CHUNK_OVERLAP  # noqa: E402
 from db_docs import (  # noqa: E402
     create_documents_table,
     delete_document,
@@ -89,7 +89,7 @@ def collect_files(folder: str) -> list[str]:
     return sorted(out)
 
 
-def blocks_to_chunks(doc: LoadedDoc) -> list[tuple[str, int | None, str | None, int]]:
+def blocks_to_chunks(doc: LoadedDoc, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[tuple[str, int | None, str | None, int]]:
     """LoadedDoc -> [(content, page, heading, chunk_index), ...].
 
     Chunk TỪNG BLOCK thay vì nối cả tài liệu rồi cắt, vì 2 lý do:
@@ -106,7 +106,7 @@ def blocks_to_chunks(doc: LoadedDoc) -> list[tuple[str, int | None, str | None, 
     # unique index là (source, chunk_index) — reset theo block thì trùng khoá ngay.
     idx = 0
     for block in doc.blocks:
-        for piece in chunk_text(block.text):
+        for piece in chunk_text(block.text, chunk_size=chunk_size, overlap=overlap):
             if len(piece) < MIN_CHUNK_CHARS:
                 continue
             out.append((piece, block.page, block.heading, idx))

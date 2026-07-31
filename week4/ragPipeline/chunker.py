@@ -63,6 +63,9 @@ def chunk_text(
     text = text.strip()
     if not text:
         return []
+    if overlap >= chunk_size:
+        raise ValueError("error infinity loop")
+    
     step = chunk_size - overlap
     chunks = []
     for start in range(0, len(text), step):
@@ -71,8 +74,6 @@ def chunk_text(
             chunks.append(piece)
         if start + chunk_size >= len(text):
             break
-        if overlap >= chunk_size:
-            raise ValueError("error infinity loop")
     return chunks
 
 

@@ -18,7 +18,7 @@ if hasattr(sys.stdout, "reconfigure"):
 CHARS = 300      # số ký tự in ra để so bằng mắt
 
 
-def doc_bang_pypdf(path: str, page_no: int) -> tuple[str, float]:
+def read_with_pypdf(path: str, page_no: int) -> tuple[str, float]:
     """Trả (text của trang page_no, thời gian đọc CẢ file tính bằng giây)."""
     from pypdf import PdfReader
 
@@ -29,7 +29,7 @@ def doc_bang_pypdf(path: str, page_no: int) -> tuple[str, float]:
     return pages[page_no - 1] if page_no <= len(pages) else "", elapsed
 
 
-def doc_bang_pdfplumber(path: str, page_no: int, layout: bool = False) -> tuple[str, float]:
+def read_with_pdfplumber(path: str, page_no: int, layout: bool = False) -> tuple[str, float]:
     """Trả (text của trang page_no, thời gian đọc CẢ file tính bằng giây).
 
     layout=True: pdfplumber cố giữ khoảng cách theo toạ độ gốc (chèn space để mô phỏng
@@ -44,10 +44,10 @@ def doc_bang_pdfplumber(path: str, page_no: int, layout: bool = False) -> tuple[
     return pages[page_no - 1] if page_no <= len(pages) else "", elapsed
 
 
-def in_ket_qua(ten: str, text: str, elapsed: float) -> None:
+def print_result(label: str, text: str, elapsed: float) -> None:
     n_dong = len(text.splitlines())
     print(f"\n{'=' * 70}")
-    print(f"  {ten}   ·   {len(text)} ký tự   ·   {n_dong} dòng   ·   {elapsed:.2f}s (cả file)")
+    print(f"  {label}   ·   {len(text)} ký tự   ·   {n_dong} dòng   ·   {elapsed:.2f}s (cả file)")
     print("=" * 70)
     print(text[:CHARS] if text.strip() else "  ⚠️  (rỗng — trang ảnh / PDF scan?)")
 
@@ -61,9 +61,9 @@ def main() -> None:
 
     print(f"📄 {path}  ·  trang {page_no}  ·  {CHARS} ký tự đầu")
 
-    in_ket_qua("pypdf", *doc_bang_pypdf(path, page_no))
-    in_ket_qua("pdfplumber (mặc định)", *doc_bang_pdfplumber(path, page_no))
-    in_ket_qua("pdfplumber (layout=True)", *doc_bang_pdfplumber(path, page_no, layout=True))
+    print_result("pypdf", *read_with_pypdf(path, page_no))
+    print_result("pdfplumber (mặc định)", *read_with_pdfplumber(path, page_no))
+    print_result("pdfplumber (layout=True)", *read_with_pdfplumber(path, page_no, layout=True))
 
     # Bonus: pdfplumber có extract_tables() mà pypdf không có.
     import pdfplumber
