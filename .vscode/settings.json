@@ -1,8 +1,12 @@
 {
     "python.analysis.extraPaths": [
+        "./week3",
+        "./week4",
         "./week4/pgvector",
         "./week4/semanticSearch",
         "./week4/ragPipeline",
-        "./week3"
+        "./week5",
+        "./week5/ingestDocs",
+        "./week5/indexTuning"
     ]
 }
