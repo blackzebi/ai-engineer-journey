@@ -60,10 +60,10 @@ def find_repeated_lines(pages: list[str], ratio: float = HEADER_FOOTER_RATIO) ->
         lines_in_page = {ln.strip() for ln in page.splitlines() if ln.strip()}
         counter.update(lines_in_page)
 
-    nguong = len(pages) * ratio
+    threshold = len(pages) * ratio
     return {
         line for line, count in counter.items()
-        if count >= nguong and len(line) <= MAX_HEADER_LEN
+        if count >= threshold and len(line) <= MAX_HEADER_LEN
     }
 
 
@@ -97,7 +97,7 @@ def join_broken_lines(text: str) -> str:
 
     Trong text thô có 2 loại xuống dòng trông y hệt nhau: ngắt dòng KỸ THUẬT (chữ hết chiều
     rộng trang, phải nối) và ngắt đoạn NGỮ NGHĨA (hết ý, phải giữ). Không có cách nào chắc
-    chắn 100% -> dùng heuristic 3 điều kiện, xem nen_noi().
+    chắn 100% -> dùng heuristic 3 điều kiện, xem should_join().
 
     Giới hạn đã biết: tiếng Việt nhiều dòng bắt đầu bằng chữ hoa giữa câu (tên riêng) nên
     điều kiện 2 sẽ bỏ sót vài chỗ. Mục tiêu là giảm ~80% nhiễu, không phải 100%.
@@ -109,7 +109,7 @@ def join_broken_lines(text: str) -> str:
     lines = text.split("\n")
     out: list[str] = []
 
-    def nen_noi(a: str, b: str) -> bool:
+    def should_join(a: str, b: str) -> bool:
         """Có nên nối dòng a với dòng b không — cả 3 điều kiện phải đúng."""
         a, b = a.rstrip(), b.lstrip()
         if not a or not b:
@@ -125,7 +125,7 @@ def join_broken_lines(text: str) -> str:
     # Mẹo: xây `out` rồi mỗi lần nối thì SỬA phần tử cuối. Cách này tự động xử lý được
     # chuỗi 3–4 dòng liên tiếp bị ngắt, vì out[-1] luôn là phiên bản đã nối mới nhất.
     for line in lines:
-        if out and nen_noi(out[-1], line):
+        if out and should_join(out[-1], line):
             # Nối bằng " " chứ không nối trần: "truy"+"xuất" = "truyxuất" -> embedding sai.
             out[-1] = out[-1].rstrip() + " " + line.lstrip()
         else:

@@ -1,12 +1,12 @@
 """
-so_sanh_pdf.py — Công cụ tạm để so pypdf vs pdfplumber (T2 tuần 5, task 'so sánh')
+compare_pdf.py — Công cụ tạm để so pypdf vs pdfplumber (T2 tuần 5, task 'so sánh')
 
 File này KHÔNG thuộc pipeline. Nó là dụng cụ đo, chạy vài lần rồi có thể xoá (hoặc giữ
 lại trong repo như bằng chứng "tôi có đo thật" — người đọc portfolio thích thứ này).
 
 Chạy:
-    python so_sanh_pdf.py "D:/Study/tai-lieu-test/bao-cao.pdf"
-    python so_sanh_pdf.py "D:/Study/tai-lieu-test/bao-cao.pdf" 3     # xem trang 3
+    python compare_pdf.py "D:/Study/tai-lieu-test/bao-cao.pdf"
+    python compare_pdf.py "D:/Study/tai-lieu-test/bao-cao.pdf" 3     # xem trang 3
 """
 
 import sys
@@ -45,16 +45,16 @@ def read_with_pdfplumber(path: str, page_no: int, layout: bool = False) -> tuple
 
 
 def print_result(label: str, text: str, elapsed: float) -> None:
-    n_dong = len(text.splitlines())
+    line_count = len(text.splitlines())
     print(f"\n{'=' * 70}")
-    print(f"  {label}   ·   {len(text)} ký tự   ·   {n_dong} dòng   ·   {elapsed:.2f}s (cả file)")
+    print(f"  {label}   ·   {len(text)} ký tự   ·   {line_count} dòng   ·   {elapsed:.2f}s (cả file)")
     print("=" * 70)
     print(text[:CHARS] if text.strip() else "  ⚠️  (rỗng — trang ảnh / PDF scan?)")
 
 
 def main() -> None:
     if len(sys.argv) < 2:
-        raise SystemExit('Dùng: python so_sanh_pdf.py "<file.pdf>" [số_trang]')
+        raise SystemExit('Dùng: python compare_pdf.py "<file.pdf>" [số_trang]')
 
     path = sys.argv[1]
     page_no = int(sys.argv[2]) if len(sys.argv) > 2 else 2   # mặc định trang 2, không phải bìa
