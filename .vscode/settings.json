@@ -5,8 +5,10 @@
         "./week4/pgvector",
         "./week4/semanticSearch",
         "./week4/ragPipeline",
+        "./week4/ragLite",
         "./week5",
         "./week5/ingestDocs",
-        "./week5/indexTuning"
+        "./week5/indexTuning",
+        "./week5/askCli",
     ]
 }
