@@ -1,0 +1,500 @@
+{
+  "run_id": "3e9a01e4",
+  "k": 3,
+  "results": [
+    {
+      "case_id": "A1",
+      "question": "Graceful shutdown trong Node gồm những bước nào?",
+      "expect": "answerable",
+      "difficulty": "easy",
+      "answer": "Tôi không tìm thấy thông tin này trong tài liệu.\n\nCác đoạn trích được cung cấp chứa thông tin về Event Loop phases trong Node.js [1], async communication reliability [2], và Circuit breaker pattern [3], nhưng không đề cập đến các bước của graceful shutdown trong Node.js.",
+      "sources": [
+        [
+          "nodejs_interview_questions.txt.txt",
+          0.4813383238506941
+        ],
+        [
+          "Backend-NodeJS-Interview-Knowledge_2026-07-08.docx",
+          0.4593427860996828
+        ],
+        [
+          "Backend-NodeJS-Interview-Knowledge_2026-07-08.docx",
+          0.4410944575609975
+        ]
+      ],
+      "error": null,
+      "passed": false,
+      "checks": [
+        {
+          "name": "refusal",
+          "passed": false,
+          "detail": "Từ chối oan - tài liệu có câu trả lời"
+        },
+        {
+          "name": "keywords",
+          "passed": false,
+          "detail": "thiếu: SIGTERM, server.close"
+        },
+        {
+          "name": "citation",
+          "passed": true,
+          "detail": "trích [1, 2, 3] / 3 nguồn"
+        },
+        {
+          "name": "source",
+          "passed": true,
+          "detail": "khớp ở nguồn [2]"
+        }
+      ],
+      "metrics": {
+        "input_tokens": 1271,
+        "output_tokens": 93,
+        "total_usd": 0.001736,
+        "top_similarity": 0.4813,
+        "elapsed_seconds": 86.9
+      }
+    },
+    {
+      "case_id": "A2",
+      "question": "Vì sao không nên dùng index của mảng làm rowKey trong bảng Ant Design?",
+      "expect": "answerable",
+      "difficulty": "easy",
+      "answer": "# Vì sao không nên dùng index của mảng làm rowKey trong bảng Ant Design\n\n**Không nên dùng index làm rowKey vì các lý do sau:**\n\n1. **Gây bug state \"dính\" nhầm item** [1]: Khi list có thể thêm/xoá/sắp xếp lại, React sẽ map nhầm phần tử cũ với phần tử mới, dẫn đến state của các component như input, checkbox bị gắn nhầm vào item khác.\n\n2. **Mất performance** [1]: Việc mapping sai gây ra việc re-render không cần thiết và cập nhật DOM không hiệu quả.\n\n3. **Ví dụ thực tế** [1]: \"Khi user xoá 1 row thì checkbox của row dưới bị tick nhầm — nguyên nhân là rowKey theo index. Fix bằng rowKey theo id từ backend.\"\n\n**Giải pháp:** Sử dụng `rowKey` theo id từ backend thay vì index, vì key chỉ cần unique trong các siblings [1].",
+      "sources": [
+        [
+          "Frontend Interview Prep - JS, React, AntD, HTML-CSS, RN.docx",
+          0.6860744688607588
+        ],
+        [
+          "Backend-NodeJS-Interview-Knowledge_2026-07-08.docx",
+          0.5689688649093435
+        ],
+        [
+          "Frontend Interview Prep - JS, React, AntD, HTML-CSS, RN.docx",
+          0.5229263920665771
+        ]
+      ],
+      "error": null,
+      "passed": true,
+      "checks": [
+        {
+          "name": "refusal",
+          "passed": true,
+          "detail": "có trả lời, đúng kỳ vọng"
+        },
+        {
+          "name": "keywords",
+          "passed": true,
+          "detail": "đủ 2 từ khoá"
+        },
+        {
+          "name": "citation",
+          "passed": true,
+          "detail": "trích [1] / 3 nguồn"
+        },
+        {
+          "name": "source",
+          "passed": true,
+          "detail": "khớp ở nguồn [1]"
+        }
+      ],
+      "metrics": {
+        "input_tokens": 1193,
+        "output_tokens": 308,
+        "total_usd": 0.002733,
+        "top_similarity": 0.6861,
+        "elapsed_seconds": 3.95
+      }
+    },
+    {
+      "case_id": "A3",
+      "question": "Trong React Router, điều hướng bằng code ở v6 dùng cái gì, và ở v5 thì khác thế nào?",
+      "expect": "answerable",
+      "difficulty": "easy",
+      "answer": "Dựa vào các đoạn trích được cung cấp:\n\n**Trong React Router v6:** Điều hướng bằng code sử dụng hook `useNavigate()` [2]. Ví dụ:\n```javascript\nconst navigate = useNavigate();\nnavigate('/dashboard');\n```\n\n**Về v5:** Tôi không tìm thấy thông tin này trong tài liệu. Các đoạn trích chỉ đề cập đến React Router v6 mà không so sánh với v5.",
+      "sources": [
+        [
+          "100+ React Interview Questions Straight from Ex-interviewers (2026) _ Blog.pdf",
+          0.6501801636058194
+        ],
+        [
+          "100+ React Interview Questions Straight from Ex-interviewers (2026) _ Blog.pdf",
+          0.6156431832833213
+        ],
+        [
+          "100+ React Interview Questions Straight from Ex-interviewers (2026) _ Blog.pdf",
+          0.60717487417191
+        ]
+      ],
+      "error": null,
+      "passed": false,
+      "checks": [
+        {
+          "name": "refusal",
+          "passed": false,
+          "detail": "Từ chối oan - tài liệu có câu trả lời"
+        },
+        {
+          "name": "keywords",
+          "passed": false,
+          "detail": "thiếu: useHistory"
+        },
+        {
+          "name": "citation",
+          "passed": true,
+          "detail": "trích [2] / 3 nguồn"
+        },
+        {
+          "name": "source",
+          "passed": true,
+          "detail": "khớp ở nguồn [1]"
+        }
+      ],
+      "metrics": {
+        "input_tokens": 1115,
+        "output_tokens": 145,
+        "total_usd": 0.00184,
+        "top_similarity": 0.6502,
+        "elapsed_seconds": 4.2
+      }
+    },
+    {
+      "case_id": "A4",
+      "question": "Làm sao để tránh hàng loạt request cùng đổ dồn vào database ngay khi một key cache phổ biến vừa hết hạn?",
+      "expect": "answerable",
+      "difficulty": "medium",
+      "answer": "Dựa vào tài liệu, có 3 cách chính để tránh cache stampede (hàng loạt request đổ vào DB khi key hot hết hạn) [1]:\n\n1. **Lock** — Chỉ cho 1 request đi query DB, các request còn lại chờ kết quả [1]\n\n2. **TTL kèm jitter ngẫu nhiên** — Thêm một khoảng thời gian random vào TTL để các key không hết hạn đồng loạt [1]\n\n3. **Refresh sớm** — Làm mới cache trước khi nó hết hạn thay vì đợi hết hạn mới cập nhật [1]\n\nLựa chọn nào cũng giúp giảm số request đổ vào cùng lúc, tránh gây quá tải cho cơ sở dữ liệu.",
+      "sources": [
+        [
+          "Backend-NodeJS-Interview-Knowledge_2026-07-08.docx",
+          0.7382122357089679
+        ],
+        [
+          "Backend-NodeJS-Interview-Knowledge_2026-07-08.docx",
+          0.6299767680841853
+        ],
+        [
+          "Backend-NodeJS-Interview-Knowledge_2026-07-08.docx",
+          0.6008366142440701
+        ]
+      ],
+      "error": null,
+      "passed": true,
+      "checks": [
+        {
+          "name": "refusal",
+          "passed": true,
+          "detail": "có trả lời, đúng kỳ vọng"
+        },
+        {
+          "name": "keywords",
+          "passed": true,
+          "detail": "đủ 2 từ khoá"
+        },
+        {
+          "name": "citation",
+          "passed": true,
+          "detail": "trích [1] / 3 nguồn"
+        },
+        {
+          "name": "source",
+          "passed": true,
+          "detail": "khớp ở nguồn [1]"
+        }
+      ],
+      "metrics": {
+        "input_tokens": 1313,
+        "output_tokens": 254,
+        "total_usd": 0.002583,
+        "top_similarity": 0.7382,
+        "elapsed_seconds": 3.42
+      }
+    },
+    {
+      "case_id": "A5",
+      "question": "PropTypes có còn được dùng để kiểm tra kiểu của prop nữa không? Nếu không thì thay bằng gì?",
+      "expect": "answerable",
+      "difficulty": "medium",
+      "answer": "Không, PropTypes không còn được dùng nữa. \n\nTheo đó, \"PropTypes is deprecated as of React 19 and no longer ships from the react package\" [1]. Thay vào đó, \"Use TypeScript instead; it catches the same mismatches at compile time and integrates with editor tooling\" [1].\n\nTypeScript được khuyến nghị vì nó có những ưu điểm như: \"catches prop mismatches at compile time, integrates with editor tooling (autocomplete, refactors, jump-to-definition), and is the default in most React project templates\" [2].\n\nNếu bạn đang duy trì codebase cũ vẫn dùng prop-types, nên \"migrate to TypeScript\" [2].",
+      "sources": [
+        [
+          "100+ React Interview Questions Straight from Ex-interviewers (2026) _ Blog.pdf",
+          0.7045201217808151
+        ],
+        [
+          "100+ React Interview Questions Straight from Ex-interviewers (2026) _ Blog.pdf",
+          0.6340256339925776
+        ],
+        [
+          "Frontend Interview Prep - JS, React, AntD, HTML-CSS, RN.docx",
+          0.6142426710323314
+        ]
+      ],
+      "error": null,
+      "passed": true,
+      "checks": [
+        {
+          "name": "refusal",
+          "passed": true,
+          "detail": "có trả lời, đúng kỳ vọng"
+        },
+        {
+          "name": "keywords",
+          "passed": true,
+          "detail": "đủ 2 từ khoá"
+        },
+        {
+          "name": "citation",
+          "passed": true,
+          "detail": "trích [1, 2] / 3 nguồn"
+        },
+        {
+          "name": "source",
+          "passed": true,
+          "detail": "khớp ở nguồn [1]"
+        }
+      ],
+      "metrics": {
+        "input_tokens": 989,
+        "output_tokens": 192,
+        "total_usd": 0.001949,
+        "top_similarity": 0.7045,
+        "elapsed_seconds": 3.06
+      }
+    },
+    {
+      "case_id": "A6",
+      "question": "Ở môi trường dev với React 18 StrictMode, useEffect có dependency array rỗng chạy mấy lần và vì sao React làm vậy?",
+      "expect": "answerable",
+      "difficulty": "medium",
+      "answer": "Ở môi trường dev với React 18 StrictMode, useEffect có dependency array rỗng chạy **2 lần** [3].\n\n**Lý do:** React làm vậy để giúp phát hiện effect thiếu cleanup. Cụ thể, quá trình chạy là: mount → unmount (cleanup) → mount lại [3]. Điều này giúp nhà phát triển phát hiện các vấn đề với effect không có cleanup function phù hợp.\n\n**Lưu ý:** Trong môi trường production, useEffect với dependency array rỗng chỉ chạy **1 lần** [3] — đó là hành vi bình thường dự kiến.",
+      "sources": [
+        [
+          "100+ React Interview Questions Straight from Ex-interviewers (2026) _ Blog.pdf",
+          0.7195158345735504
+        ],
+        [
+          "100+ React Interview Questions Straight from Ex-interviewers (2026) _ Blog.pdf",
+          0.5830364662960513
+        ],
+        [
+          "Frontend Interview Prep - JS, React, AntD, HTML-CSS, RN.docx",
+          0.5802531711912632
+        ]
+      ],
+      "error": null,
+      "passed": true,
+      "checks": [
+        {
+          "name": "refusal",
+          "passed": true,
+          "detail": "có trả lời, đúng kỳ vọng"
+        },
+        {
+          "name": "keywords",
+          "passed": true,
+          "detail": "đủ 2 từ khoá"
+        },
+        {
+          "name": "citation",
+          "passed": true,
+          "detail": "trích [3] / 3 nguồn"
+        },
+        {
+          "name": "source",
+          "passed": true,
+          "detail": "Không áp dụng"
+        }
+      ],
+      "metrics": {
+        "input_tokens": 961,
+        "output_tokens": 191,
+        "total_usd": 0.001916,
+        "top_similarity": 0.7195,
+        "elapsed_seconds": 2.34
+      }
+    },
+    {
+      "case_id": "A7",
+      "question": "Event loop của Node đi qua những phase nào trong một vòng lặp, và Promise.then được chạy ở thời điểm nào so với các phase đó?",
+      "expect": "answerable",
+      "difficulty": "hard",
+      "answer": "## Event Loop Phases và Promise.then\n\n**Các phase trong mỗi vòng lặp (tick) của Event Loop:**\n\n1. **Timers** — chạy callback setTimeout/setInterval đã đến hạn [1]\n2. **Pending callbacks** [1]\n3. **Poll** — nhận I/O mới (đọc file xong, DB trả về, request đến) [1]\n4. **Check** — chạy setImmediate [1]\n5. **Close callbacks** [3]\n\n**Thời điểm Promise.then được chạy:**\n\nPromise.then được chạy **GIỮA MỌI BƯỚC/PHASE** của event loop. Cụ thể, nó là một **microtask** và được thực thi ngay khi JavaScript call stack rỗng, trước khi event loop chuyển sang phase tiếp theo [1]. \n\nTheo thứ tự ưu tiên: `process.nextTick` chạy trước, rồi đến `Promise.then` [1].\n\n**Ví dụ minh họa:** Với code `console.log(A); setTimeout(B, 0); Promise.resolve().then(C); console.log(D)` sẽ in ra **A D C B**, vì A, D là code đồng bộ, C là microtask (chạy khi stack rỗng), B là macrotask timer (phải đợi phase timers) [1].",
+      "sources": [
+        [
+          "Backend-NodeJS-Interview-Knowledge_2026-07-08.docx",
+          0.6805058984188703
+        ],
+        [
+          "Backend-NodeJS-Interview-Knowledge_2026-07-08.docx",
+          0.5750326610678196
+        ],
+        [
+          "nodejs_interview_questions.txt.txt",
+          0.546822944495917
+        ]
+      ],
+      "error": null,
+      "passed": true,
+      "checks": [
+        {
+          "name": "refusal",
+          "passed": true,
+          "detail": "có trả lời, đúng kỳ vọng"
+        },
+        {
+          "name": "keywords",
+          "passed": true,
+          "detail": "đủ 3 từ khoá"
+        },
+        {
+          "name": "citation",
+          "passed": true,
+          "detail": "trích [1, 3] / 3 nguồn"
+        },
+        {
+          "name": "source",
+          "passed": true,
+          "detail": "Không áp dụng"
+        }
+      ],
+      "metrics": {
+        "input_tokens": 1318,
+        "output_tokens": 378,
+        "total_usd": 0.003208,
+        "top_similarity": 0.6805,
+        "elapsed_seconds": 4.14
+      }
+    },
+    {
+      "case_id": "N1",
+      "question": "Tài liệu khuyến nghị dùng phiên bản Node.js nào cho production năm 2026?",
+      "expect": "no_answer",
+      "difficulty": "medium",
+      "answer": "Tôi không tìm thấy thông tin này trong tài liệu.\n\nCác đoạn trích được cung cấp không chứa thông tin về khuyến nghị phiên bản Node.js cho production năm 2026.",
+      "sources": [
+        [
+          "Top 50 Full Stack Developer Interview Questions.pdf",
+          0.49241678364728547
+        ],
+        [
+          "nodejs_interview_questions.txt.txt",
+          0.4202328644001837
+        ],
+        [
+          "Frontend Interview Prep - JS, React, AntD, HTML-CSS, RN.docx",
+          0.40019053836391216
+        ]
+      ],
+      "error": null,
+      "passed": true,
+      "checks": [
+        {
+          "name": "refusal",
+          "passed": true,
+          "detail": "từ chối đúng lúc"
+        },
+        {
+          "name": "keywords",
+          "passed": true,
+          "detail": "không áp dụng"
+        },
+        {
+          "name": "citation",
+          "passed": true,
+          "detail": "không áp dụng"
+        },
+        {
+          "name": "source",
+          "passed": true,
+          "detail": "Không áp dụng"
+        }
+      ],
+      "metrics": {
+        "input_tokens": 996,
+        "output_tokens": 69,
+        "total_usd": 0.001341,
+        "top_similarity": 0.4924,
+        "elapsed_seconds": 1.76
+      }
+    },
+    {
+      "case_id": "N2",
+      "question": "Giá cổ phiếu Apple hôm nay là bao nhiêu?",
+      "expect": "no_answer",
+      "difficulty": "easy",
+      "answer": "Tôi không tìm thấy thông tin này trong tài liệu.",
+      "sources": [],
+      "error": null,
+      "passed": true,
+      "checks": [
+        {
+          "name": "refusal",
+          "passed": true,
+          "detail": "từ chối đúng lúc"
+        },
+        {
+          "name": "keywords",
+          "passed": true,
+          "detail": "không áp dụng"
+        },
+        {
+          "name": "citation",
+          "passed": true,
+          "detail": "không áp dụng"
+        },
+        {
+          "name": "source",
+          "passed": true,
+          "detail": "Không áp dụng"
+        }
+      ],
+      "metrics": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_usd": 0.0,
+        "top_similarity": 0.0,
+        "elapsed_seconds": 0.1
+      }
+    },
+    {
+      "case_id": "N3",
+      "question": "Cách nấu phở bò truyền thống gồm những bước nào?",
+      "expect": "no_answer",
+      "difficulty": "easy",
+      "answer": "Tôi không tìm thấy thông tin này trong tài liệu.",
+      "sources": [],
+      "error": null,
+      "passed": true,
+      "checks": [
+        {
+          "name": "refusal",
+          "passed": true,
+          "detail": "từ chối đúng lúc"
+        },
+        {
+          "name": "keywords",
+          "passed": true,
+          "detail": "không áp dụng"
+        },
+        {
+          "name": "citation",
+          "passed": true,
+          "detail": "không áp dụng"
+        },
+        {
+          "name": "source",
+          "passed": true,
+          "detail": "Không áp dụng"
+        }
+      ],
+      "metrics": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_usd": 0.0,
+        "top_similarity": 0.0,
+        "elapsed_seconds": 0.08
+      }
+    }
+  ]
+}

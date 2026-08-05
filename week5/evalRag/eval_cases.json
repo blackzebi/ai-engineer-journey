@@ -1,0 +1,97 @@
+{
+  "dataset_version": "2026-07-30",
+  "corpus_note": "6 file tài liệu ôn phỏng vấn Frontend/Backend trong D:/Study/tai-lieu-test — 2 PDF tiếng Anh (100+ React Interview Questions, 64 trang, ~86k ký tự · Top 50 Full Stack Developer Interview Questions, 47 trang, ~49k ký tự), 2 DOCX tiếng Việt (Backend-NodeJS-Interview-Knowledge ~43k · Frontend Interview Prep JS/React/AntD ~34k), 1 TXT tiếng Anh (nodejs_interview_questions, 14 câu, ~4.5k) và 1 MD tiếng Việt (weekly-tracker ~18k). Câu hỏi eval bằng tiếng Việt, tài liệu trộn Việt–Anh: đây đồng thời là phép thử cross-lingual retrieval của model multilingual MiniLM.",
+
+  "cases": [
+    {
+      "id": "A1",
+      "question": "Graceful shutdown trong Node gồm những bước nào?",
+      "expect": "answerable",
+      "difficulty": "easy",
+      "expect_keywords": ["SIGTERM", "server.close"],
+      "expect_source": "Backend-NodeJS-Interview-Knowledge",
+      "note": "Dễ — câu trả lời nằm gọn trong 1 mục có heading riêng của Backend docx. Đã verify: 'graceful', 'SIGTERM', 'server.close' chỉ xuất hiện ở DUY NHẤT file này, nên expect_source an toàn. Hai từ khoá đều KHÔNG nằm trong câu hỏi -> model không thể pass bằng cách nhại lại đề. Sai ca này = retrieval hỏng, không phải câu hỏi khó."
+    },
+    {
+      "id": "A2",
+      "question": "Vì sao không nên dùng index của mảng làm rowKey trong bảng Ant Design?",
+      "expect": "answerable",
+      "difficulty": "easy",
+      "expect_keywords": ["checkbox", "state"],
+      "expect_source": "Frontend Interview Prep",
+      "note": "Dễ, và cố ý chọn FILE KHÁC A1. Chọn góc 'rowKey của AntD' thay vì 'key trong React' là có chủ đích: 'rowKey' / 'Ant Design Form' / 'index làm key' đã verify là chỉ có ở Frontend docx, trong khi 'key trong list React' thì React PDF cũng nói -> hỏi kiểu chung chung sẽ làm expect_source FAIL oan. 'checkbox' là từ khoá phân biệt mạnh (đúng cái bug tài liệu kể: xoá 1 row thì checkbox row dưới bị tick nhầm)."
+    },
+    {
+      "id": "A3",
+      "question": "Trong React Router, điều hướng bằng code ở v6 dùng cái gì, và ở v5 thì khác thế nào?",
+      "expect": "answerable",
+      "difficulty": "easy",
+      "expect_keywords": ["useNavigate", "useHistory"],
+      "expect_source": "100+ React Interview Questions",
+      "note": "Dễ về nội dung, nhưng câu trả lời nằm ở TRANG 42/64 — sâu trong tài liệu. Đây là ca bắt lỗi loader/normalize chỉ đọc được vài trang đầu: nếu pypdf đọc hụt thì ca này im lặng FAIL trong khi A5 (trang 11) vẫn PASS, và chính sự lệch đó là tín hiệu. Hỏi cả v6 lẫn v5 nên câu trả lời đúng BẮT BUỘC nêu cả hai tên hook — cả hai đều không có trong đề."
+    },
+    {
+      "id": "A4",
+      "question": "Làm sao để tránh hàng loạt request cùng đổ dồn vào database ngay khi một key cache phổ biến vừa hết hạn?",
+      "expect": "answerable",
+      "difficulty": "medium",
+      "expect_keywords": ["stampede", "jitter"],
+      "expect_source": "Backend-NodeJS-Interview-Knowledge",
+      "note": "Trung bình — PARAPHRASE thật: câu hỏi mô tả hiện tượng bằng lời thường, tuyệt đối không dùng thuật ngữ 'cache stampede'. Model phải tự gọi đúng tên hiện tượng và nêu cách chữa (lock / TTL kèm jitter / refresh sớm). Đây là ca chứng minh giá trị của embedding so với tìm từ khoá: BM25 sẽ trượt vì không có từ nào trùng."
+    },
+    {
+      "id": "A5",
+      "question": "PropTypes có còn được dùng để kiểm tra kiểu của prop nữa không? Nếu không thì thay bằng gì?",
+      "expect": "answerable",
+      "difficulty": "medium",
+      "expect_keywords": ["React 19", "TypeScript"],
+      "expect_source": "100+ React Interview Questions",
+      "note": "Trung bình — ca kiểm SỐ và TÊN RIÊNG sống sót qua extract_text() của PDF: câu trả lời đúng phải nêu chính xác 'React 19' (deprecated từ bản này) chứ không nói chung chung 'bản mới'. 'PropTypes' đã verify là chỉ có ở React PDF nên expect_source an toàn, dù 'React 19' xuất hiện ở cả Frontend docx."
+    },
+    {
+      "id": "A6",
+      "question": "Ở môi trường dev với React 18 StrictMode, useEffect có dependency array rỗng chạy mấy lần và vì sao React làm vậy?",
+      "expect": "answerable",
+      "difficulty": "medium",
+      "expect_keywords": ["cleanup", "production"],
+      "expect_source": null,
+      "note": "Trung bình, lấy từ DOCX (không phải PDF) để so chất lượng loader. expect_source cố ý để NULL: 'StrictMode' xuất hiện ở CẢ React PDF lẫn Frontend docx, cả hai đều trả lời được — ép nguồn ở đây sẽ tạo FAIL oan. Đây là ví dụ thật cho luật: chỉ khai expect_source khi câu trả lời nằm ở ĐÚNG MỘT file. Bù lại, từ khoá 'cleanup' đã verify chỉ có ở Frontend docx nên vẫn đo được gián tiếp."
+    },
+    {
+      "id": "A7",
+      "question": "Event loop của Node đi qua những phase nào trong một vòng lặp, và Promise.then được chạy ở thời điểm nào so với các phase đó?",
+      "expect": "answerable",
+      "difficulty": "hard",
+      "expect_keywords": ["timers", "poll", "microtask"],
+      "expect_source": null,
+      "note": "KHÓ — ca quan trọng nhất, MULTI-HOP: danh sách phase nằm ở Backend docx VÀ nodejs_interview_questions.txt (bản 6 phase chi tiết hơn), còn thời điểm chạy microtask là một ý riêng ('GIỮA MỌI BƯỚC'). Trả lời đủ cần ghép ≥2 chunk, thường ≥2 file -> đây là ca duy nhất đo được k=3 có đủ hay không. expect_source NULL vì câu trả lời hợp lệ đến từ nhiều file. Đã verify 'check phase' KHÔNG tồn tại trong corpus nên KHÔNG dùng 'check' làm từ khoá. Nếu ca này FAIL: đừng sửa hôm nay — đó đúng là chỗ hybrid retrieval (T3 tuần 6) và reranking (T4 tuần 6) sẽ chữa, ghi vào README."
+    },
+    {
+      "id": "N1",
+      "question": "Tài liệu khuyến nghị dùng phiên bản Node.js nào cho production năm 2026?",
+      "expect": "no_answer",
+      "difficulty": "medium",
+      "expect_keywords": [],
+      "expect_source": null,
+      "note": "BẪY CÙNG CHỦ ĐỀ — ca giá trị nhất trong 3 ca bẫy. Đã verify bằng grep: 'node 18/20/22', 'phiên bản node', 'node version' KHÔNG xuất hiện ở bất kỳ file nào. Nhưng câu hỏi nằm đúng giữa vùng chủ đề của corpus -> retrieval sẽ trả về chunk Node với similarity CAO, ngưỡng 0.35 không cứu được, và model biết thừa câu trả lời từ kiến thức nền của nó. Chỉ prompt grounding mới chặn nổi. Ca này FAIL = lớp chống bịa chỉ là ngưỡng similarity, chưa phải grounding thật."
+    },
+    {
+      "id": "N2",
+      "question": "Giá cổ phiếu Apple hôm nay là bao nhiêu?",
+      "expect": "no_answer",
+      "difficulty": "easy",
+      "expect_keywords": [],
+      "expect_source": null,
+      "note": "BẪY THỜI SỰ — tài liệu tĩnh không thể biết. Giữ nguyên từ week4/ragLite/questions.json để so được bộ eval tuần 4 (5 ca) với tuần 5 (10 ca) trên cùng một ca."
+    },
+    {
+      "id": "N3",
+      "question": "Cách nấu phở bò truyền thống gồm những bước nào?",
+      "expect": "no_answer",
+      "difficulty": "easy",
+      "expect_keywords": [],
+      "expect_source": null,
+      "note": "BẪY KHÁC HẲN LĨNH VỰC (cũng giữ từ tuần 4). Ca này phải PASS nhờ NGƯỠNG similarity chứ không nhờ prompt: top-1 < 0.35 -> retrieve trả rỗng -> KHÔNG gọi LLM. Nghiệm thu bắt buộc: dòng log của ca này phải có input_tokens = 0. Nếu input_tokens > 0 nghĩa là MIN_SIMILARITY đang quá thấp cho corpus này."
+    }
+  ]
+}
