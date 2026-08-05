@@ -1,13 +1,13 @@
 """
-ask.py — CLI hỏi-đáp tài liệu. Đây là "mặt tiền" của Dự án 1.
+ask.py — CLI hỏi-đáp tài liệu. Mặt tiền của Dự án 1.
 
     INPUT :  python ask.py "câu hỏi" [--k 3] [--doc-type pdf]
     OUTPUT:  câu trả lời stream ra màn hình + nguồn [1][2][3] kèm điểm similarity
              + dòng tổng kết token/chi phí, và 1 dòng log JSONL
 
-Tiêu chí nghiệm thu của cả ngày (từ xlsx): **người khác clone repo về là chạy được, không
-phải hỏi thêm.** Nên file này bị chấm ở những chỗ không phải tính năng:
-lỗi có dễ hiểu không · thiếu config có nói rõ phải làm gì không · key có lọt lên GitHub không.
+Tiêu chí: người khác clone repo về là chạy được, không phải hỏi thêm. Nên file này bị chấm ở
+những chỗ không phải tính năng: lỗi có dễ hiểu không · thiếu config có nói rõ phải làm gì
+không · key có lọt lên GitHub không.
 
 Luồng, và chỗ mỗi module chịu trách nhiệm:
 
@@ -28,8 +28,6 @@ Luồng, và chỗ mỗi module chịu trách nhiệm:
 
 Tái dùng: week4/ragLite/prompt_rag.py (qua stream_answer) · week4/pgvector/vector_ops.py
 và week4/ragPipeline/search_pg.py (qua retriever). Không sửa một dòng nào của tuần 4.
-
-📖 Mỗi hàm chia 2 khối: PHẦN 1 GIẢI THÍCH (đọc) · PHẦN 2 CODE CẦN VIẾT (gõ).
 
 Chạy:
     python ask.py "embedding là gì?"
@@ -61,7 +59,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 load_dotenv()
 
-# Biến môi trường bắt buộc + gợi ý sửa cho từng cái. VIẾT SẴN.
+# Biến môi trường bắt buộc + gợi ý sửa cho từng cái.
 REQUIRED_ENV_VARS = {
     "ANTHROPIC_API_KEY": "lấy ở console.anthropic.com, dán vào .env",
     "DATABASE_URL": "xem .env.example — mặc định trỏ tới container ở week4/pgvector",
@@ -70,158 +68,78 @@ REQUIRED_ENV_VARS = {
 VALID_DOC_TYPES = ("pdf", "docx", "md", "txt")
 
 
-# ---------------------------------------------------------------------------
-# TODO 1 — đọc tham số dòng lệnh
-# ---------------------------------------------------------------------------
 def parse_args(argv: list[str]) -> argparse.Namespace:
     """argv -> Namespace(question, k, doc_type, check).
 
-    Ví dụ: ['RAG là gì?', '--k', '5']-> Na mespace(question='RAG là gì?', k=5, ...)
-    """
-    # ═══════════════════════════════════════════════════════════════════════
-    # PHẦN 1 — GIẢI THÍCH  (đọc, không gõ)
-    # ═══════════════════════════════════════════════════════════════════════
-    # ▸ Vì sao dùng argparse chứ không tự cắt sys.argv như tuần 4 làm?
-    #   Tuần 4 tự làm `sys.argv[sys.argv.index("--doc-type") + 1]` — nó nổ IndexError khi
-    #   người dùng gõ `--doc-type` mà quên giá trị, và không có `-h` để người khác biết
-    #   phải gõ gì. argparse cho miễn phí: --help, báo lỗi sai kiểu, giá trị mặc định,
-    #   và `choices=` chặn `--doc-type pdff` ngay tại cổng. Đúng tinh thần "clone về chạy được".
-    #
-    # ▸ Bẫy 1 — `type=int` cho --k là bắt buộc. Thiếu nó thì k là chuỗi "5", truyền xuống
-    #   `LIMIT %s` psycopg vẫn chạy (Postgres tự cast), nhưng `range(k)` hay so sánh số ở chỗ
-    #   khác thì nổ ở tận đâu đó. Ép kiểu ngay tại cổng vào.
-    #
-    # ▸ Bẫy 2 — `nargs="?"` cho question để `python ask.py --check` không bị đòi câu hỏi.
-    #   Nhưng như vậy question có thể là None -> phải xử lý ở main, đừng để nó chui xuống
-    #   validate_question dưới dạng None.
-    #
-    # ▸ Bẫy 3 — câu hỏi tiếng Việt có dấu cách, người dùng RẤT hay quên nháy kép:
-    #   `python ask.py RAG là gì` -> argparse coi 'là' là tham số thừa và báo lỗi khó hiểu.
-    #   Cách chữa gọn: `nargs="*"` rồi tự join. Hôm nay chọn nargs="?" + epilog nhắc dùng
-    #   nháy kép — đơn giản hơn, và thông điệp lỗi vẫn rõ. Ghi vào README luôn.
-    #
-    # ▸ Nhắc cú pháp: `parser.parse_args(argv)` — truyền argv vào làm tham số (không để nó
-    #   tự đọc sys.argv) thì hàm này test được bằng list tự chế. Thói quen nhỏ, khác biệt lớn.
+    Ví dụ: ['RAG là gì?', '--k', '5'] -> Namespace(question='RAG là gì?', k=5, ...)
 
-    # ═══════════════════════════════════════════════════════════════════════
-    # PHẦN 2 — CODE CẦN VIẾT
-    # ═══════════════════════════════════════════════════════════════════════
-    # Bước 1 — dựng parser, có mô tả và ví dụ (phần này người khác đọc để biết cách dùng):
-    #     parser = argparse.ArgumentParser(
-    #         prog="ask.py",
-    #         description="Hỏi-đáp tài liệu đã ingest (RAG). Câu trả lời stream + trích nguồn.",
-    #         epilog='Ví dụ: python ask.py "RAG là gì?" --k 5 --doc-type pdf',
-    #     )
-    #
-    # Bước 2 — tham số vị trí (câu hỏi), cho phép vắng để dùng với --check:
-    #     parser.add_argument("question", nargs="?", default=None,
-    #                         help="câu hỏi, nhớ đặt trong nháy kép")
-    #
-    # Bước 3 — các tuỳ chọn:
-    #     parser.add_argument("--k", type=int, default=DEFAULT_TOP_K,
-    #                         help=f"số chunk lấy về (mặc định {DEFAULT_TOP_K})")
-    #     parser.add_argument("--doc-type", choices=VALID_DOC_TYPES, default=None,
-    #                         help="chỉ tìm trong 1 định dạng")
-    #     parser.add_argument("--check", action="store_true",
-    #                         help="chỉ kiểm tra cấu hình rồi thoát")
-    #     # dấu gạch trong --doc-type tự thành gạch dưới: args.doc_type
-    #
-    # Bước 4 — parse và trả:
-    #     return parser.parse_args(argv)
-    #
-    # ✅ Kiểm tra nhanh: `python ask.py -h` phải in ra bảng hướng dẫn có cả ví dụ.
-    #    `python ask.py "x" --doc-type pdff` phải báo lỗi gọn, liệt kê giá trị hợp lệ.
-    #    `python ask.py "x" --k abc` phải báo "invalid int value", không nổ traceback.
+    Dùng argparse chứ không tự cắt sys.argv như tuần 4: bản tự làm
+    `sys.argv[sys.argv.index("--doc-type") + 1]` nổ IndexError khi người dùng quên giá trị,
+    và không có `-h` để người khác biết phải gõ gì. argparse cho miễn phí --help, báo lỗi sai
+    kiểu, giá trị mặc định, và choices= chặn `--doc-type pdff` ngay tại cổng.
+
+    Nhận argv làm THAM SỐ thay vì tự đọc sys.argv -> hàm này test được bằng list tự chế.
+
+    Giới hạn đã biết: câu hỏi tiếng Việt có dấu cách, người dùng rất hay quên nháy kép
+    (`python ask.py RAG là gì`) -> argparse coi 'là' là tham số thừa. Chọn nargs="?" + epilog
+    nhắc dùng nháy kép thay vì nargs="*" rồi tự join, vì thông điệp lỗi vẫn rõ.
+    """
     parser = argparse.ArgumentParser(
         prog="ask.py",
         description="Hỏi-đáp tài liệu đã ingest (RAG). Câu trả lời stream + trích nguồn.",
         epilog='Ví dụ: python ask.py "RAG là gì?" --k 5 --doc-type pdf',
     )
 
+    # nargs="?" để `python ask.py --check` không bị đòi câu hỏi -> question có thể là None,
+    # main() phải xử lý trước khi đưa xuống validate_question.
     parser.add_argument("question", nargs="?", default=None,
                         help="câu hỏi, nhớ đặt trong nháy kép")
 
+    # type=int là bắt buộc: thiếu thì k là chuỗi "5", truyền xuống LIMIT %s psycopg vẫn chạy
+    # (Postgres tự cast) nhưng so sánh số ở chỗ khác thì nổ ở tận đâu đó.
     parser.add_argument("--k", type=int, default=DEFAULT_TOP_K,
                         help=f"số chunk lấy về (mặc định {DEFAULT_TOP_K})")
 
+    # dấu gạch trong --doc-type tự thành gạch dưới: args.doc_type
     parser.add_argument("--doc-type", choices=VALID_DOC_TYPES, default=None,
                         help="chỉ tìm trong 1 định dạng")
-    
+
     parser.add_argument("--check", action="store_true",
                         help="chỉ kiểm tra cấu hình rồi thoát")
 
     return parser.parse_args(argv)
 
 
-# ---------------------------------------------------------------------------
-# TODO 2 — kiểm tra cấu hình trước khi làm bất cứ việc gì tốn tiền
-# ---------------------------------------------------------------------------
 def check_env() -> list[str]:
     """Trả danh sách biến môi trường bắt buộc còn THIẾU. Rỗng nghĩa là đủ.
 
     Ví dụ: thiếu key -> ['ANTHROPIC_API_KEY']
-    """
-    # ═══════════════════════════════════════════════════════════════════════
-    # PHẦN 1 — GIẢI THÍCH  (đọc, không gõ)
-    # ═══════════════════════════════════════════════════════════════════════
-    # ▸ Vì sao kiểm tra TẤT CẢ rồi mới báo, thay vì gặp cái thiếu đầu tiên là ném luôn?
-    #   Báo từng cái một là bắt người ta sửa–chạy–lại 3 vòng mới biết hết mình thiếu gì.
-    #   Liệt kê hết trong một lần là phép lịch sự cơ bản của công cụ dòng lệnh.
-    #
-    # ▸ Bẫy 1 — `os.getenv(name)` trả chuỗi RỖNG khi .env viết `ANTHROPIC_API_KEY=`
-    #   (có dòng, không có giá trị). Chuỗi rỗng là falsy nên `if not value` bắt được,
-    #   nhưng `if name not in os.environ` thì KHÔNG — biến có tồn tại, chỉ là rỗng.
-    #   Đây là tình huống rất hay gặp: người ta copy .env.example rồi quên điền.
-    #
-    # ▸ Bẫy 2 — người dùng dán nhầm cả dòng `ANTHROPIC_API_KEY=sk-ant-...` vào ô giá trị,
-    #   hoặc để nguyên placeholder `sk-ant-...` của .env.example. Bắt được placeholder là
-    #   tiết kiệm cho họ 10 phút ngơ ngác. Không bắt hết mọi trường hợp được, nhưng bắt
-    #   được cái phổ biến nhất thì nên bắt.
-    #
-    # ▸ Bẫy 3 — TUYỆT ĐỐI không in giá trị key ra màn hình để "debug cho tiện". Terminal
-    #   đó có thể đang được quay màn hình / share. Chỉ in TÊN biến thiếu.
-    #
-    # ▸ Nhắc cú pháp: `dict.items()` cho ra cặp (key, value) — ở đây value là câu gợi ý sửa,
-    #   dùng khi in cho người dùng.
 
-    # ═══════════════════════════════════════════════════════════════════════
-    # PHẦN 2 — CODE CẦN VIẾT
-    # ═══════════════════════════════════════════════════════════════════════
-    # Bước 1 — gom biến thiếu (rỗng cũng tính là thiếu — Bẫy 1):
-    #     missing = []
-    #     for name in REQUIRED_ENV_VARS:
-    #         value = (os.getenv(name) or "").strip()
-    #         if not value:
-    #             missing.append(name)
-    #
-    # Bước 2 — bắt trường hợp còn nguyên placeholder của .env.example:
-    #         elif value.endswith("...") or value in ("sk-ant-...", "changeme"):
-    #             missing.append(name)
-    #     # `elif` nối vào `if not value` ở Bước 1, đừng viết thành `if` rời -> thêm 2 lần
-    #
-    # Bước 3 — trả về:
-    #     return missing
-    #
-    # ✅ Kiểm tra nhanh: đổi tên .env thành .env.bak rồi `python ask.py --check` — phải in
-    #    ra đủ 2 tên biến kèm gợi ý, và KHÔNG in giá trị nào. Nhớ đổi tên lại.
+    Kiểm tra TẤT CẢ rồi mới báo, thay vì gặp cái thiếu đầu tiên là ném luôn: báo từng cái một
+    là bắt người ta sửa–chạy–lại 3 vòng mới biết hết mình thiếu gì.
+
+    ⚠️ Chỉ trả về TÊN biến, tuyệt đối không in giá trị key ra màn hình để "debug cho tiện" —
+    terminal đó có thể đang được quay màn hình.
+    """
     missing = []
     for name in REQUIRED_ENV_VARS:
+        # os.getenv trả chuỗi RỖNG khi .env viết `KEY=` (có dòng, không có giá trị).
+        # `if not value` bắt được; `if name not in os.environ` thì KHÔNG — biến có tồn tại,
+        # chỉ là rỗng. Đây là tình huống copy .env.example rồi quên điền, rất hay gặp.
         value = (os.getenv(name) or "").strip()
         if not value:
             missing.append(name)
+        # Bắt trường hợp còn nguyên placeholder của .env.example.
         elif value.endswith("...") or value in ("sk-ant-...", "changeme"):
             missing.append(name)
-            
+
     return missing
 
 
-# ---------------------------------------------------------------------------
-# VIẾT SẴN — hàm ghép các mảnh. Đọc để thấy THỨ TỰ đúng, không cần gõ lại.
-# ---------------------------------------------------------------------------
 def run_once(question: str, k: int, doc_type: str | None) -> int:
     """Chạy trọn 1 câu hỏi. Trả exit code.
 
-    Thứ tự các bước KHÔNG phải ngẫu nhiên — đọc kỹ chỗ nào đứng trước chỗ nào:
+    Thứ tự các bước không ngẫu nhiên:
       1. validate  : chặn câu rác trước, vì embed + query + LLM đều tốn thời gian và tiền
       2. retrieve  : đã lọc ngưỡng bên trong; rỗng ⇒ dừng, KHÔNG gọi LLM (lớp chống bịa)
       3. stream    : chỉ tới đây mới tiêu tiền, và chỉ khi đã chắc có căn cứ
@@ -270,7 +188,7 @@ def run_once(question: str, k: int, doc_type: str | None) -> int:
 
 
 def main() -> int:
-    """Entry point. CHỖ DUY NHẤT được bắt lỗi và quyết định exit code. VIẾT SẴN.
+    """Entry point. CHỖ DUY NHẤT được bắt lỗi và quyết định exit code.
 
     Mọi hàm bên dưới chỉ RAISE. Gom việc bắt lỗi về một chỗ nên: thông điệp lỗi nhất quán,
     và muốn đổi cách hiển thị (thêm màu, ghi ra file) thì sửa đúng một nơi.
@@ -315,7 +233,7 @@ def main() -> int:
 if __name__ == "__main__":
     sys.exit(main())
 
-    # ✅ ĐẠT khi (chạy đủ 6 phép thử, làm hết đừng bỏ dở):
+    # ✅ ĐẠT khi (6 phép thử):
     #   1. python ask.py -h                       -> bảng hướng dẫn có ví dụ
     #   2. python ask.py --check                  -> "Cấu hình đủ"
     #   3. python ask.py ""                       -> 1 dòng gọn, KHÔNG có chữ Traceback

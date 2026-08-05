@@ -1,7 +1,7 @@
 """
 stream_answer.py — Streaming câu trả lời + đo token + ước tính chi phí mỗi câu hỏi
 
-Hai việc của file này, tưởng rời nhau nhưng dùng CHUNG một lời gọi API:
+Hai việc, dùng CHUNG một lời gọi API:
 
     tuần 4:  resp = client.messages.create(...)         # chờ ~6 giây, màn hình đứng im
              print(resp.content[0].text)                # rồi cả đoạn văn hiện ra một lúc
@@ -12,23 +12,20 @@ Hai việc của file này, tưởng rời nhau nhưng dùng CHUNG một lời g
                  final = stream.get_final_message()     #       cảm giác chờ đợi
              final.usage  ──► input_tokens/output_tokens ──► estimate_cost ──► log JSONL
 
-Vì sao streaming đổi hẳn cảm giác dùng (câu hỏi CHÍNH của block sáng, hiểu rồi hãy code):
-    Tổng thời gian KHÔNG giảm — thậm chí nhích lên vài chục ms. Thứ giảm là **time to first
-    token**: 6 giây xuống 0.4 giây. Người dùng chịu được chờ lâu nếu thấy có gì đó đang xảy ra;
-    cái họ không chịu được là màn hình chết không biết treo hay đang chạy. Đây là bài học UX
-    dùng được ở mọi chỗ, không riêng LLM.
+Vì sao streaming đổi hẳn cảm giác dùng:
+    Tổng thời gian KHÔNG giảm — thậm chí nhích lên vài chục ms. Thứ giảm là time to first
+    token: 6 giây xuống 0.4 giây. Người dùng chịu được chờ lâu nếu thấy có gì đó đang xảy ra;
+    cái họ không chịu được là màn hình chết không biết treo hay đang chạy. Streaming là kỹ
+    thuật UX, không phải kỹ thuật hiệu năng.
 
-Vì sao phải đo token và tiền ngay từ bây giờ:
-    "Mỗi câu hỏi tốn khoảng 0.002 USD, chủ yếu là input vì context 3 chunk" — câu này nói
-    được trong phỏng vấn tách hẳn người đã chạy thật với người mới đọc tutorial. Và nó bắt
-    mình nhìn ra một sự thật: trong RAG, input token (context) thường ĐẮT hơn output.
-    Tăng k từ 3 lên 10 là nhân ~3 lần tiền mỗi câu hỏi, đổi lại rất ít chất lượng.
+Vì sao đo token và tiền ngay từ bây giờ:
+    Nó bắt mình nhìn ra một sự thật: trong RAG, input token (context) thường ĐẮT hơn output,
+    dù đơn giá input rẻ hơn. Đo thật ở đây: 835 in / 106 out -> 61% chi phí nằm ở input.
+    Kéo theo: tăng k từ 3 lên 10 là nhân ~3 lần tiền mỗi câu hỏi, đổi lại rất ít chất lượng.
 
 Tái dùng nguyên si từ week4/ragLite/prompt_rag.py: SYSTEM_PROMPT, build_rag_prompt.
 
-📖 Mỗi hàm chia 2 khối: PHẦN 1 GIẢI THÍCH (đọc) · PHẦN 2 CODE CẦN VIẾT (gõ).
-
-Self-test bằng client GIẢ — KHÔNG cần API key, KHÔNG tốn tiền, không cần mạng:
+Self-test bằng client GIẢ — không cần API key, không tốn tiền, không cần mạng:
     python stream_answer.py
 """
 
@@ -65,7 +62,7 @@ NO_ANSWER = "Tôi không tìm thấy thông tin này trong tài liệu."
 
 
 def get_client():
-    """Khởi tạo Anthropic client, báo lỗi PHÂN LOẠI ĐƯỢC nếu thiếu key. VIẾT SẴN.
+    """Khởi tạo Anthropic client, báo lỗi PHÂN LOẠI ĐƯỢC nếu thiếu key.
 
     Khác bản tuần 4 (rag_qa.py::get_client dùng `raise SystemExit`): ở đây ném AskError
     để main() xử lý tập trung — xem docstring retriever.retrieve.
@@ -77,83 +74,21 @@ def get_client():
     return anthropic.Anthropic(timeout=30)
 
 
-# ---------------------------------------------------------------------------
-# TODO 1 — stream ra màn hình, đồng thời giữ lại text đầy đủ + usage
-# ---------------------------------------------------------------------------
 def stream_and_collect(client, question: str, chunks) -> tuple[str, dict]:
     """Gọi Claude ở chế độ stream. In dần ra màn hình, trả (text đầy đủ, usage).
 
     usage = {"input_tokens": 1234, "output_tokens": 210}
     Ví dụ: stream_and_collect(client, "RAG là gì?", chunks) -> ("RAG là...", {...})
-    """
-    # ═══════════════════════════════════════════════════════════════════════
-    # PHẦN 1 — GIẢI THÍCH  (đọc, không gõ)
-    # ═══════════════════════════════════════════════════════════════════════
-    # ▸ Vì sao vừa in NGAY vừa gom vào list, chứ không gom xong rồi in một lần?
-    #   Gom xong mới in = quay lại đúng trải nghiệm của messages.create, streaming thành vô
-    #   nghĩa. Nhưng bản thân text đầy đủ vẫn cần: để ghi log, để eval, để Streamlit dùng lại.
-    #   -> làm cả hai trong cùng vòng lặp.
-    #
-    # ▸ Bẫy CHẾT NGƯỜI 1 — `print(text, end="")` KHÔNG có `flush=True` thì Python giữ chữ
-    #   trong buffer và xả ra theo từng dòng. Kết quả: chữ hiện ra giật cục từng đoạn, hoặc
-    #   im lìm rồi hiện hết một lúc — nghĩa là mất sạch lợi ích của streaming, mà code thì
-    #   nhìn vẫn "đúng". Bug im lặng kinh điển của streaming trên terminal.
-    #
-    # ▸ Bẫy 2 — `"".join(parts)` chứ không `text += part` trong vòng lặp. String trong Python
-    #   là immutable: mỗi lần += là copy lại toàn bộ chuỗi -> O(n²). Vài trăm mảnh thì chưa
-    #   thấy gì, nhưng đây là phản xạ nên có sẵn.
-    #
-    # ▸ Bẫy 3 — `get_final_message()` phải gọi BÊN TRONG khối `with`. Ra khỏi `with` là
-    #   stream đã đóng -> lỗi. Và phải duyệt HẾT text_stream trước khi gọi nó, nếu không
-    #   usage chưa đầy đủ.
-    #
-    # ▸ Bẫy 4 — retry cả hàm stream là sai: lỗi ở giữa chừng thì phần chữ đã in ra màn hình
-    #   không rút lại được, retry sẽ in tiếp lần hai và người dùng thấy câu trả lời trùng lặp.
-    #   Đúng: chỉ retry ở tầng ngoài KHI CHƯA in gì (xem chỗ dùng retry_with_backoff bên dưới),
-    #   hoặc chấp nhận không retry cho stream. Hôm nay chọn: retry quanh chỗ MỞ stream.
-    #
-    # ▸ Nhắc cú pháp: `with client.messages.stream(...) as stream:` — context manager, tự
-    #   đóng kết nối. `stream.text_stream` là generator chỉ duyệt được MỘT LẦN; duyệt lần
-    #   hai ra rỗng chứ không báo lỗi.
 
-    # ═══════════════════════════════════════════════════════════════════════
-    # PHẦN 2 — CODE CẦN VIẾT
-    # ═══════════════════════════════════════════════════════════════════════
-    # Bước 1 — không có chunk thì đừng gọi API (tiết kiệm tiền + không cho model cơ hội bịa):
-    #     if not chunks:
-    #         print(NO_ANSWER)
-    #         return NO_ANSWER, {"input_tokens": 0, "output_tokens": 0}
-    #
-    # Bước 2 — dựng prompt bằng đồ tuần 4, chunk đổi hình qua as_prompt_chunk():
-    #     prompt_chunks = [c.as_prompt_chunk() for c in chunks]
-    #     prompt = build_rag_prompt(question, prompt_chunks)
-    #
-    # Bước 3 — mở stream (bọc retry quanh CHỖ MỞ, xem Bẫy 4):
-    #     parts: list[str] = []
-    #     open_stream = lambda: client.messages.stream(      # lambda: hoãn lời gọi lại
-    #         model=MODEL,
-    #         max_tokens=MAX_TOKENS,
-    #         system=SYSTEM_PROMPT,        # để ở system=, KHÔNG nhét vào messages
-    #         messages=[{"role": "user", "content": prompt}],
-    #     )
-    #     with retry_with_backoff(open_stream) as stream:
-    #
-    # Bước 4 — (trong with) vừa in vừa gom, nhớ flush:
-    #         for text in stream.text_stream:
-    #             print(text, end="", flush=True)
-    #             parts.append(text)
-    #         final_message = stream.get_final_message()     # vẫn TRONG with
-    #     print()                                            # xuống dòng sau khi stream xong
-    #
-    # Bước 5 — lấy usage và trả về:
-    #     usage = {
-    #         "input_tokens": final_message.usage.input_tokens,
-    #         "output_tokens": final_message.usage.output_tokens,
-    #     }
-    #     return "".join(parts), usage
-    #
-    # ✅ Kiểm tra nhanh: chạy thật một câu hỏi, chữ phải hiện ra TỪNG MẢNH chứ không phải
-    #    cả đoạn một lúc. Nếu hiện một lúc -> gần như chắc chắn quên flush=True.
+    Vừa in NGAY vừa gom vào list trong cùng vòng lặp: gom xong mới in là quay lại đúng trải
+    nghiệm của messages.create. Nhưng text đầy đủ vẫn cần — để ghi log, để eval, để Streamlit
+    dùng lại.
+
+    stream.text_stream là generator chỉ duyệt được MỘT LẦN; duyệt lần hai ra rỗng chứ không
+    báo lỗi. get_final_message() phải gọi BÊN TRONG khối `with` và SAU khi duyệt hết
+    text_stream, nếu không usage chưa đầy đủ.
+    """
+    # Không có chunk thì đừng gọi API: tiết kiệm tiền và không cho model cơ hội bịa.
     if not chunks:
         print(NO_ANSWER)
         return NO_ANSWER, {"input_tokens": 0, "output_tokens": 0}
@@ -162,15 +97,20 @@ def stream_and_collect(client, question: str, chunks) -> tuple[str, dict]:
     prompt = build_rag_prompt(question, prompt_chunks)
 
     parts: list[str] = []
-    open_stream = lambda: client.messages.stream(
+    open_stream = lambda: client.messages.stream(      # noqa: E731 — lambda để hoãn lời gọi
         model=MODEL,
         max_tokens=MAX_TOKENS,
-        system=SYSTEM_PROMPT,
+        system=SYSTEM_PROMPT,        # để ở system=, KHÔNG nhét vào messages
         messages=[{"role": "user", "content": prompt}],
     )
     with retry_with_backoff(open_stream) as stream:
         for text in stream.text_stream:
+            # flush=True là BẮT BUỘC: end="" nghĩa là không có \n nào cho tới cuối câu trả lời,
+            # nên thiếu flush thì Python giữ chữ trong buffer và xả ra một lúc ở cuối — mất
+            # sạch lợi ích streaming, mà code vẫn chạy đúng và không báo gì. Bug im lặng.
             print(text, end="", flush=True)
+            # "".join(parts) chứ không text += part: string immutable, mỗi += là copy lại
+            # toàn bộ chuỗi -> O(n²).
             parts.append(text)
         final_message = stream.get_final_message()
     print()
@@ -182,55 +122,27 @@ def stream_and_collect(client, question: str, chunks) -> tuple[str, dict]:
     return "".join(parts), usage
 
 
-
-# ---------------------------------------------------------------------------
-# TODO 2 — quy token ra tiền
-# ---------------------------------------------------------------------------
 def estimate_cost(input_tokens: int, output_tokens: int) -> dict:
     """Token -> chi phí ước tính USD, tách riêng phần input và output.
 
     Trả: {"input_usd": .., "output_usd": .., "total_usd": ..}
     Ví dụ: estimate_cost(2000, 300) -> input 0.002 USD, output 0.0015 USD
-    """
-    # ═══════════════════════════════════════════════════════════════════════
-    # PHẦN 1 — GIẢI THÍCH  (đọc, không gõ)
-    # ═══════════════════════════════════════════════════════════════════════
-    # ▸ Vì sao tách input/output chứ không gộp một con số?
-    #   Vì hai phần này phản ứng với hai quyết định thiết kế khác nhau:
-    #     input  <- k (số chunk) và chunk_size  -> tăng k là tăng thẳng phần này
-    #     output <- max_tokens và độ dài câu trả lời
-    #   Gộp lại thì thấy "tốn 0.003 USD" nhưng không biết siết chỗ nào. Tách ra thì thấy
-    #   ngay "80% tiền nằm ở context" -> biết ngay nên chỉnh k, không phải chỉnh max_tokens.
-    #
-    # ▸ Bẫy — chia cho 1000 thay vì 1_000_000. Giá niêm yết là "per million tokens"; nhầm
-    #   một dấu phẩy là con số lệch 1000 lần, mà nó vẫn in ra đẹp đẽ nên không ai nghi ngờ.
-    #   Cách tự bắt: 2000 token input với giá 1 USD/triệu PHẢI ra 0.002 USD. Nhẩm được.
-    #
-    # ▸ Đây là ƯỚC TÍNH, không phải hoá đơn: chưa tính prompt caching, chưa tính batch
-    #   discount, giá có thể đã đổi. Nói "ước tính" khi trình bày là chính xác và đủ dùng.
-    #
-    # ▸ Nhắc cú pháp: `1_000_000` — dấu gạch dưới trong số là cú pháp hợp lệ của Python,
-    #   chỉ để người đọc đỡ đếm số 0. Dùng đi, nó chặn đúng cái bẫy ở trên.
 
-    # ═══════════════════════════════════════════════════════════════════════
-    # PHẦN 2 — CODE CẦN VIẾT
-    # ═══════════════════════════════════════════════════════════════════════
-    # Bước 1 — quy đổi từng phần:
-    #     input_usd = input_tokens / 1_000_000 * PRICE_PER_MTOK_INPUT
-    #     output_usd = output_tokens / 1_000_000 * PRICE_PER_MTOK_OUTPUT
-    #
-    # Bước 2 — trả dict (round 6 chữ số: dưới mức đó là nhiễu, in ra chỉ rối mắt):
-    #     return {
-    #         "input_usd": round(input_usd, 6),
-    #         "output_usd": round(output_usd, 6),
-    #         "total_usd": round(input_usd + output_usd, 6),
-    #     }
-    #
-    # ✅ Kiểm tra nhanh: estimate_cost(1_000_000, 0)["input_usd"] phải bằng đúng
-    #    PRICE_PER_MTOK_INPUT. Phép thử này bắt được ngay lỗi chia nhầm 1000.
+    Tách input/output chứ không gộp một số, vì hai phần phản ứng với hai quyết định khác nhau:
+        input  <- k (số chunk) và chunk_size  -> tăng k là tăng thẳng phần này
+        output <- max_tokens và độ dài câu trả lời
+    Gộp lại thì thấy "tốn 0.003 USD" nhưng không biết siết chỗ nào. Tách ra thì thấy ngay
+    "61% tiền nằm ở context" -> biết phải chỉnh k, không phải chỉnh max_tokens.
+
+    Đây là ƯỚC TÍNH, không phải hoá đơn: chưa tính prompt caching, batch discount, và giá có
+    thể đã đổi.
+    """
+    # Chia 1_000_000 (giá niêm yết là per MILLION), không phải 1_000. Nhầm là lệch 1000 lần
+    # mà con số vẫn in ra đẹp đẽ nên không ai nghi ngờ. Phép thử tự bắt: xem khối main.
     input_usd = input_tokens / 1_000_000 * PRICE_PER_MTOK_INPUT
     output_usd = output_tokens / 1_000_000 * PRICE_PER_MTOK_OUTPUT
 
+    # round 6 chữ số: dưới mức đó là nhiễu, in ra chỉ rối mắt.
     return {
         "input_usd": round(input_usd, 6),
         "output_usd": round(output_usd, 6),
@@ -238,66 +150,35 @@ def estimate_cost(input_tokens: int, output_tokens: int) -> dict:
     }
 
 
-# ---------------------------------------------------------------------------
-# TODO 3 — ghi lại mỗi câu hỏi để sau này còn đo được
-# ---------------------------------------------------------------------------
 def log_query(record: dict, path: str = LOG_PATH) -> None:
     """Ghi 1 dòng JSON vào file log (định dạng JSONL: mỗi dòng là 1 JSON độc lập).
 
     Ví dụ 1 dòng: {"at": "2026-07-29T11:20:03Z", "question": "...", "k": 3,
                    "n_chunks": 2, "top_similarity": 0.62, "input_tokens": 1840, ...}
-    """
-    # ═══════════════════════════════════════════════════════════════════════
-    # PHẦN 1 — GIẢI THÍCH  (đọc, không gõ)
-    # ═══════════════════════════════════════════════════════════════════════
-    # ▸ Vì sao JSONL (mỗi dòng 1 JSON) chứ không phải 1 mảng JSON lớn?
-    #   File JSON mảng thì mỗi lần ghi phải đọc cả file, parse, append, ghi đè lại — chậm dần
-    #   và mất sạch dữ liệu nếu crash giữa lúc ghi đè. JSONL chỉ append thêm một dòng, đọc thì
-    #   duyệt từng dòng. Đây là định dạng chuẩn của log/dataset, và tuần 7 (golden dataset,
-    #   LLM-as-judge) sẽ ăn thẳng file này làm đầu vào — hôm nay ghi là để tuần 7 có cái mà đo.
-    #
-    # ▸ Bẫy 1 — `json.dumps` mặc định escape tiếng Việt thành ạ... File log mở ra không
-    #   đọc nổi bằng mắt. Phải `ensure_ascii=False`. Và `encoding="utf-8"` khi mở file, vì
-    #   Windows mặc định cp1252 -> UnicodeEncodeError ngay dòng tiếng Việt đầu tiên.
-    #
-    # ▸ Bẫy 2 — mở file mode "w" là xoá sạch log cũ mỗi lần chạy. Phải là "a" (append).
-    #
-    # ▸ Bẫy 3 — thư mục logs/ chưa tồn tại -> FileNotFoundError ngay lần chạy đầu của người
-    #   clone repo về. `os.makedirs(..., exist_ok=True)` giải quyết, và exist_ok=True để chạy
-    #   lần thứ hai không nổ.
-    #
-    # ▸ Bẫy 4 — ĐỪNG ghi API key hay toàn văn chunk vào log. Log rồi vô tình commit là đúng
-    #   cái lỗi mà task "config sạch" hôm nay muốn tránh. Log metadata, không log nội dung.
-    #   Nhớ thêm `logs/` vào .gitignore (xem guide.md).
-    #
-    # ▸ Nhắc cú pháp: `datetime.now(timezone.utc).isoformat()` — có timezone. `datetime.now()`
-    #   trần cho giờ máy không kèm múi giờ, so sánh log giữa 2 máy là sai giờ mà không biết.
 
-    # ═══════════════════════════════════════════════════════════════════════
-    # PHẦN 2 — CODE CẦN VIẾT
-    # ═══════════════════════════════════════════════════════════════════════
-    # Bước 1 — đảm bảo thư mục tồn tại:
-    #     os.makedirs(os.path.dirname(path), exist_ok=True)
-    #
-    # Bước 2 — thêm mốc thời gian nếu chỗ gọi chưa đưa:
-    #     record = {"at": datetime.now(timezone.utc).isoformat(), **record}
-    #     # ** bung dict: khoá trùng thì cái SAU thắng -> chỗ gọi vẫn ghi đè "at" được
-    #
-    # Bước 3 — append 1 dòng:
-    #     with open(path, "a", encoding="utf-8") as f:
-    #         f.write(json.dumps(record, ensure_ascii=False) + "\n")
-    #
-    # ✅ Kiểm tra nhanh: hỏi 3 câu rồi mở logs/queries.jsonl — phải có đúng 3 dòng, tiếng Việt
-    #    đọc được bằng mắt, và KHÔNG dòng nào chứa chuỗi bắt đầu bằng "sk-ant".
+    JSONL chứ không phải 1 mảng JSON lớn: mảng thì mỗi lần ghi phải đọc cả file, parse, append,
+    ghi đè lại — chậm dần và mất sạch dữ liệu nếu crash giữa lúc ghi đè. JSONL chỉ append thêm
+    một dòng. Tuần 7 (golden dataset, LLM-as-judge) sẽ ăn thẳng file này làm đầu vào.
+
+    ⚠️ KHÔNG ghi API key hay toàn văn chunk vào đây. Log metadata, không log nội dung.
+    Nhớ giữ `logs/` trong .gitignore.
+    """
+    # exist_ok=True: thư mục chưa có thì tạo, có rồi thì lần chạy thứ hai không nổ.
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
+    # ** bung dict: khoá trùng thì cái SAU thắng -> chỗ gọi vẫn ghi đè "at" được.
+    # timezone.utc chứ không datetime.now() trần: giờ máy không kèm múi giờ thì so log giữa
+    # hai máy là sai giờ mà không biết.
     record = {"at": datetime.now(timezone.utc).isoformat(), **record}
+    # mode "a" (append), không phải "w" — "w" xoá sạch log cũ mỗi lần chạy.
+    # ensure_ascii=False + encoding="utf-8": thiếu thì log tiếng Việt thành ạ... không
+    # đọc nổi bằng mắt, và Windows mặc định cp1252 sẽ nổ UnicodeEncodeError.
     with open(path, "a", encoding="utf-8") as f:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
 def print_cost_line(usage: dict, cost: dict, elapsed_seconds: float, n_chunks: int) -> None:
-    """In dòng tổng kết dưới câu trả lời. VIẾT SẴN — chỉ cần đọc.
+    """In dòng tổng kết dưới câu trả lời.
 
     Ví dụ: ⏱ 3.2s · 2 chunk · 1840 in / 210 out token · ~0.003050 USD
     """
@@ -310,7 +191,7 @@ def print_cost_line(usage: dict, cost: dict, elapsed_seconds: float, n_chunks: i
 
 
 if __name__ == "__main__":
-    # ── Client GIẢ: mô phỏng đúng hình dạng API thật, không tốn tiền, không cần mạng ────
+    # Client GIẢ: mô phỏng đúng hình dạng API thật, không tốn tiền, không cần mạng.
     class FakeUsage:
         input_tokens = 1840
         output_tokens = 210
