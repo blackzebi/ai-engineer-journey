@@ -2,15 +2,6 @@
   "dataset_version": "2026-08-10",
   "corpus_note": "Kho D:\\Study\\tai-lieu-test — 6 file tài liệu ôn phỏng vấn lập trình (2 PDF, 2 DOCX, 1 TXT, 1 MD): '100+ React Interview Questions' (PDF, 66 trang, tiếng Anh), 'Top 50 Full Stack Developer Interview Questions' (PDF, tiếng Anh), 'Backend-NodeJS-Interview-Knowledge' (DOCX, tiếng Việt), 'Frontend Interview Prep - JS, React, AntD, HTML-CSS, RN' (DOCX, tiếng Việt), 'nodejs_interview_questions.txt' (TXT ngắn, tiếng Anh), 'weekly-tracker.md' (MD, nhật ký lộ trình của Tri — CHỦ ĐỀ LẠC so với 5 file kia, nên nó hay lọt top khi câu hỏi toàn hư từ; đó là tín hiệu tốt để phát hiện truy vấn không có từ khoá phân biệt). Chủ đề chung: phỏng vấn frontend/backend/fullstack. Mọi expect_source dưới đây đã kiểm bằng grep: token quyết định chỉ xuất hiện trong ĐÚNG MỘT file. TODO: điền số dòng chunks thật từ bảng 'Phân bố theo định dạng' của week5/ingestDocs/ingest_docs.py.",
 
-  "_huong_dan": [
-    "ĐÂY LÀ DỤNG CỤ ĐO DÙNG SUỐT TUẦN 7 (T2 keyword, T3 hybrid/RRF, T4 rerank, T5 mini-project). Viết cẩu thả hôm nay thì cả tuần không chứng minh được gì.",
-    "8 câu: 6 câu CÓ câu trả lời trong tài liệu + 2 câu KHÔNG có.",
-    "expect_winner là DỰ ĐOÁN CỦA MÌNH — đọc lại từng câu và tự sửa TRƯỚC khi chạy compare_branches.py. Dự đoán sai mà giải thích được vì sao sai là ngày học tốt nhất.",
-    "expect_source là MỘT PHẦN tên file, khớp không phân biệt hoa thường.",
-    "VIẾT XONG CẢ 8 CÂU + điền expect_source RỒI MỚI CHẠY compare_branches.py.",
-    "Xoá khoá _huong_dan này trước khi commit."
-  ],
-
   "cases": [
     {
       "id": "K1",

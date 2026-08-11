@@ -221,7 +221,7 @@ python compare_branches.py --dry
 python compare_branches.py --out comparison.md
 ```
 
-- [ ] Commit & push `week7/`
+- [X] Commit & push `week7/`
 
 ### 14:00 · Nghiệm thu — 5 phép thử, làm đủ cả 5
 

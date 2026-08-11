@@ -89,8 +89,8 @@ class BranchComparison:
     @property
     def prediction_was_right(self) -> bool:
         """Dự đoán của mình có đúng không. 'either' coi là đúng khi kết quả không phải both_miss."""
-        if self.predicted_winner == "either":
-            return self.winner != BOTH_MISS
+        if self.predicted_winner == "none":
+            return self.winner == BOTH_MISS
         return self.predicted_winner == self.winner
 
 
