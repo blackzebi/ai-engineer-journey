@@ -1,0 +1,88 @@
+{
+  "dataset_version": "2026-08-10",
+  "corpus_note": "Kho D:\\Study\\tai-lieu-test — 6 file tài liệu ôn phỏng vấn lập trình (2 PDF, 2 DOCX, 1 TXT, 1 MD): '100+ React Interview Questions' (PDF, 66 trang, tiếng Anh), 'Top 50 Full Stack Developer Interview Questions' (PDF, tiếng Anh), 'Backend-NodeJS-Interview-Knowledge' (DOCX, tiếng Việt), 'Frontend Interview Prep - JS, React, AntD, HTML-CSS, RN' (DOCX, tiếng Việt), 'nodejs_interview_questions.txt' (TXT ngắn, tiếng Anh), 'weekly-tracker.md' (MD, nhật ký lộ trình của Tri — CHỦ ĐỀ LẠC so với 5 file kia, nên nó hay lọt top khi câu hỏi toàn hư từ; đó là tín hiệu tốt để phát hiện truy vấn không có từ khoá phân biệt). Chủ đề chung: phỏng vấn frontend/backend/fullstack. Mọi expect_source dưới đây đã kiểm bằng grep: token quyết định chỉ xuất hiện trong ĐÚNG MỘT file. TODO: điền số dòng chunks thật từ bảng 'Phân bố theo định dạng' của week5/ingestDocs/ingest_docs.py.",
+
+  "_huong_dan": [
+    "ĐÂY LÀ DỤNG CỤ ĐO DÙNG SUỐT TUẦN 7 (T2 keyword, T3 hybrid/RRF, T4 rerank, T5 mini-project). Viết cẩu thả hôm nay thì cả tuần không chứng minh được gì.",
+    "8 câu: 6 câu CÓ câu trả lời trong tài liệu + 2 câu KHÔNG có.",
+    "expect_winner là DỰ ĐOÁN CỦA MÌNH — đọc lại từng câu và tự sửa TRƯỚC khi chạy compare_branches.py. Dự đoán sai mà giải thích được vì sao sai là ngày học tốt nhất.",
+    "expect_source là MỘT PHẦN tên file, khớp không phân biệt hoa thường.",
+    "VIẾT XONG CẢ 8 CÂU + điền expect_source RỒI MỚI CHẠY compare_branches.py.",
+    "Xoá khoá _huong_dan này trước khi commit."
+  ],
+
+  "cases": [
+    {
+      "id": "K1",
+      "question": "Chuỗi kết nối MongoDB ở cổng 27017 viết như thế nào trong Node?",
+      "expect": "answerable",
+      "query_kind": "keyword",
+      "expect_source": "Top 50 Full Stack",
+      "expect_winner": "keyword",
+      "note": "Số hiệu cổng 27017 chỉ xuất hiện trong ĐÚNG file này (đã grep cả 6 file), trong đoạn code mongoose.connect. Đây là ca kinh điển vector trượt: '27017' là một chuỗi số, embedding của nó gần như không mang ngữ nghĩa, bị các đoạn nói chung chung về 'database connection' dìm xuống. Với keyword thì IDF của '27017' cực cao -> nhảy thẳng lên hạng 1."
+    },
+    {
+      "id": "K2",
+      "question": "Hermes engine trong React Native là gì?",
+      "expect": "answerable",
+      "query_kind": "keyword",
+      "expect_source": "Frontend Interview Prep",
+      "expect_winner": "keyword",
+      "note": "Tên riêng 'Hermes' chỉ có trong file này (mục 11.2 New Architecture: JSI, Fabric, TurboModules, Hermes). Chọn tên riêng nước ngoài CÓ CHỦ Ý: 'React Native' thì file nào cũng nhắc, nên nếu vector thắng ca này thì nó thắng vì phần 'React Native' chứ không phải vì hiểu 'Hermes' — đọc kết quả phải phân biệt hai chuyện đó."
+    },
+    {
+      "id": "S1",
+      "question": "Làm sao để không gọi API liên tục mỗi khi người dùng gõ từng chữ vào ô tìm kiếm?",
+      "expect": "answerable",
+      "query_kind": "semantic",
+      "expect_source": "Frontend Interview Prep",
+      "expect_winner": "vector",
+      "note": "Đáp án là debounce (+ throttle), nhưng câu hỏi KHÔNG chứa chữ 'debounce' — đã kiểm: 'debounce' chỉ có trong file này. Mọi từ trong câu hỏi ('API', 'gõ', 'người dùng', 'tìm kiếm') đều là hư từ hoặc từ phổ biến khắp kho -> IDF thấp -> keyword sẽ trả về rác. Đây là ca chứng minh vì sao KHÔNG thể bỏ nhánh vector."
+    },
+    {
+      "id": "S2",
+      "question": "Vì sao một trang hiển thị danh sách lại tạo ra hàng trăm truy vấn xuống cơ sở dữ liệu?",
+      "expect": "answerable",
+      "query_kind": "semantic",
+      "expect_source": "Backend-NodeJS-Interview-Knowledge",
+      "expect_winner": "vector",
+      "note": "Đáp án là vấn đề N+1 query (và DataLoader), nhưng câu hỏi cố ý KHÔNG viết 'N+1' — vì 'N+1' cũng chính là thứ tokenizer làm hỏng (plainto_tsquery tách thành 'n' và '1', cả hai đều vô dụng). Dạng 'vì sao' + không dùng lại thuật ngữ = đúng bài của vector. Ghi chú riêng cho T3: ca này đáng thử lại với biến thể CÓ chữ 'N+1' để xem hybrid xử lý ra sao."
+    },
+    {
+      "id": "M1",
+      "question": "Circuit breaker ở trạng thái HALF-OPEN thì xử lý request tiếp theo thế nào?",
+      "expect": "answerable",
+      "query_kind": "mixed",
+      "expect_source": "Backend-NodeJS-Interview-Knowledge",
+      "expect_winner": "either",
+      "note": "Vừa có thuật ngữ chính xác ('HALF-OPEN' chỉ xuất hiện trong file này) vừa cần hiểu nghĩa (3 trạng thái CLOSED/OPEN/HALF-OPEN chuyển đổi ra sao). Kỳ vọng: cả hai nhánh cùng tìm được nhưng thứ hạng khác nhau -> chính là ca để đo giá trị của RRF ngày mai. GHI LẠI THỨ HẠNG HÔM NAY, không chỉ đúng/sai."
+    },
+    {
+      "id": "M2",
+      "question": "Prop action của thẻ form trong React 19 hoạt động ra sao và useFormStatus dùng để làm gì?",
+      "expect": "answerable",
+      "query_kind": "mixed",
+      "expect_source": "React Interview Questions",
+      "expect_winner": "either",
+      "note": "Câu trả lời nằm ở CÂU HỎI SỐ 110 — trang 63/66, tức gần CUỐI tài liệu dài nhất trong kho. Hai công dụng: (1) bắt lỗi loader đọc hụt trang cuối (bài học tuần 5); (2) 'useFormStatus' chỉ có trong file này nên keyword phải thắng phần định danh, còn phần 'hoạt động ra sao' thì cần vector. Nếu ca này trả về 0 kết quả -> nghi loader trước khi nghi truy vấn."
+    },
+    {
+      "id": "N1",
+      "question": "Hash mật khẩu bằng Argon2id thì nên đặt memory cost bao nhiêu?",
+      "expect": "no_answer",
+      "query_kind": "keyword",
+      "expect_source": null,
+      "expect_winner": "none",
+      "note": "'Argon2' KHÔNG xuất hiện trong bất kỳ file nào (đã grep). Nhưng kho CÓ nói về hash mật khẩu bằng bcrypt/pbkdf2 và thread pool của libuv -> keyword sẽ tự tin trả về đúng những chunk đó vì các token 'hash', 'mật khẩu', 'cost' đều khớp. Đây là ca nguy hiểm nhất của nhánh keyword: ts_rank KHÔNG có ngưỡng như MIN_SIMILARITY của vector, nên nó luôn trả đủ top-k dù không có gì khớp thật."
+    },
+    {
+      "id": "N2",
+      "question": "Ứng dụng viết bằng Flutter thì tối ưu danh sách dài bằng cách nào?",
+      "expect": "no_answer",
+      "query_kind": "semantic",
+      "expect_source": null,
+      "expect_winner": "none",
+      "note": "'Flutter' KHÔNG có trong kho (đã grep). Chủ đề LÂN CẬN rất sát: kho có hẳn một mục về tối ưu danh sách dài trong React Native (FlatList virtualize). Vector gần như chắc chắn kéo đúng đoạn FlatList lên với similarity khá cao -> ca này đo lớp chống bịa, và cho thấy 'gần đúng chủ đề' KHÔNG bằng 'trả lời được'."
+    }
+  ]
+}
