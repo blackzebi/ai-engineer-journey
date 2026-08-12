@@ -10,5 +10,7 @@
         "./week5/ingestDocs",
         "./week5/indexTuning",
         "./week5/askCli",
+        "./week7/keywordSearch",
+        "./week7/hybridRetrieval",
     ]
 }

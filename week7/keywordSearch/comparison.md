@@ -8,7 +8,7 @@ Corpus: Kho D:\Study\tai-lieu-test — 6 file tài liệu ôn phỏng vấn lậ
 | K2 | keyword | Hermes engine trong React Native là gì? | 3 | 1 | **keyword** | ✅ |
 | S1 | semantic | Làm sao để không gọi API liên tục mỗi khi người dù | 2 | — | **vector** | ✅ |
 | S2 | semantic | Vì sao một trang hiển thị danh sách lại tạo ra hàn | 4 | 9 | **vector** | ✅ |
-| M1 | mixed | Circuit breaker ở trạng thái HALF-OPEN thì xử lý r | 1 | 1 | **tie** | ❌ |
-| M2 | mixed | Prop action của thẻ form trong React 19 hoạt động  | 1 | 3 | **vector** | ❌ |
+| M1 | mixed | Circuit breaker ở trạng thái HALF-OPEN thì xử lý r | 1 | 1 | **tie** | ✅ |
+| M2 | mixed | Prop action của thẻ form trong React 19 hoạt động  | 1 | 3 | **vector** | ✅ |
 | N1 | keyword | Hash mật khẩu bằng Argon2id thì nên đặt memory cos | — | — | **both_miss** | ✅ |
 | N2 | semantic | Ứng dụng viết bằng Flutter thì tối ưu danh sách dà | — | — | **both_miss** | ✅ |

@@ -88,7 +88,25 @@ class BranchComparison:
 
     @property
     def prediction_was_right(self) -> bool:
-        """Dự đoán của mình có đúng không. 'either' coi là đúng khi kết quả không phải both_miss."""
+        """Dự đoán của mình có đúng không.
+
+        VALID_WINNER có BỐN giá trị và mỗi giá trị cần một nhánh riêng — hai trong số đó
+        KHÔNG BAO GIỜ bằng `winner` nên so trực tiếp là luôn sai:
+
+            predicted_winner        winner sinh ra được          cách chấm
+            ----------------        -------------------          ---------
+            'keyword' / 'vector'    'keyword' / 'vector' / ...    so bằng
+            'either'                KHÔNG có giá trị 'either'     đúng khi tìm ra được
+            'none'                  KHÔNG có giá trị 'none'       đúng khi both_miss
+
+        'either' = "nhánh nào thắng cũng được, miễn tìm ra" -> đúng khi winner != both_miss.
+        'none'   = "dự đoán cả hai cùng trượt" (ca no_answer) -> đúng khi winner == both_miss.
+
+        Thiếu MỘT trong hai nhánh dưới đây là tỉ lệ dự đoán sai mà bảng vẫn in ra bình
+        thường — bug im lặng, và nó đi thẳng vào note rồi thành mốc so sánh cho các tuần sau.
+        """
+        if self.predicted_winner == "either":
+            return self.winner != BOTH_MISS
         if self.predicted_winner == "none":
             return self.winner == BOTH_MISS
         return self.predicted_winner == self.winner
@@ -249,6 +267,21 @@ def self_check() -> None:
     assert decide_winner(None, 2) == KEYWORD
     assert decide_winner(2, None) == VECTOR
     assert decide_winner(None, None) == BOTH_MISS
+
+    # prediction_was_right: phủ ĐỦ 4 giá trị của VALID_WINNER. Bug này đã xảy ra HAI LẦN —
+    # lần đầu thiếu nhánh 'none' (N1/N2 không bao giờ đúng được), lần vá sau thiếu nhánh
+    # 'either' (M1/M2 mất). Cả hai lần bảng vẫn in ra bình thường với một tỉ lệ SAI.
+    def _pred(predicted: str, winner: str) -> bool:
+        return BranchComparison("X", "q", "mixed", "a.md", 1, 2, winner, predicted).prediction_was_right
+
+    assert _pred("keyword", KEYWORD) and not _pred("keyword", VECTOR), "'keyword' so bằng"
+    assert _pred("vector", VECTOR) and not _pred("vector", TIE), "'vector' so bằng"
+    # 'either' và 'none' KHÔNG BAO GIỜ là giá trị của winner -> so bằng là luôn sai
+    assert _pred("either", TIE) and _pred("either", VECTOR) and _pred("either", KEYWORD), \
+        "'either' đúng khi tìm ra được, bất kể nhánh nào thắng"
+    assert not _pred("either", BOTH_MISS), "'either' vẫn sai khi cả hai cùng trượt"
+    assert _pred("none", BOTH_MISS), "ca no_answer: cả hai cùng trượt chính là dự đoán ĐÚNG"
+    assert not _pred("none", VECTOR) and not _pred("none", TIE), "'none' sai khi có nhánh tìm ra"
 
     fake_results = [
         BranchComparison("K1", "Mã lỗi E402 là gì?", "keyword", "a.pdf", 7, 1, KEYWORD, "keyword"),
