@@ -12,5 +12,6 @@
         "./week5/askCli",
         "./week7/keywordSearch",
         "./week7/hybridRetrieval",
+        "./week7/reranking",
     ]
 }
